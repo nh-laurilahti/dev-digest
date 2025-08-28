@@ -51,27 +51,28 @@
 
 /* Archive Controls */
 .archive-controls {
-  padding: var(--space-8) 0;
+  padding: var(--space-12) 0;
   background: var(--color-bg-primary);
 }
 
 .controls-grid {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: var(--space-6);
-  margin-bottom: var(--space-6);
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .control-label {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
 }
 
 .search-input-wrapper {
@@ -102,11 +103,16 @@
   background: var(--color-bg-tertiary);
 }
 
+.archive-controls .glass-container {
+  padding: var(--space-8);
+}
+
 .controls-actions {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: var(--space-3);
+  gap: var(--space-4);
+  margin-top: var(--space-2);
 }
 
 /* Archive Content */
@@ -625,7 +631,11 @@
 
   .controls-grid {
     grid-template-columns: 1fr;
-    gap: var(--space-4);
+    gap: var(--space-8);
+  }
+  
+  .archive-controls .glass-container {
+    padding: var(--space-6);
   }
 
   .results-summary {
