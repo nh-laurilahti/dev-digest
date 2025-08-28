@@ -760,7 +760,7 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
       name: 'Concise Technical',
       style: 'concise',
       description: 'Brief, structured technical summary with clear sections for sidebar navigation',
-      systemPrompt: 'You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical report. Focus on actual repository activity and concrete changes. Always use proper Markdown formatting with ## headers and appropriate emojis for main sections.',
+      systemPrompt: 'You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical report. Focus on actual repository activity and concrete changes. Always use proper Markdown formatting with # headers and appropriate emojis for main sections.',
       userPromptTemplate: `Create a concise technical summary of this repository activity:
 
 **REPOSITORY:** {{repositoryName}}  
@@ -775,14 +775,39 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
 **TOP CHANGES:**
 {{topChanges}}
 
+## AVAILABLE TEMPLATE VARIABLES:
+
+**Repository & Time:**
+• {{repositoryName}} — Repository name
+• {{dateRange}} — Date range (e.g., "Jan 1 - Jan 7, 2024")
+• {{dayCount}} — Number of days in period
+
+**Pull Requests:**
+• {{totalPRs}} — Total pull requests
+• {{mergedPRs}} — Merged pull requests
+• {{mergeRate}} — Merge success rate (%)
+• {{featureCount}} — Feature PRs
+• {{bugfixCount}} — Bug fix PRs
+
+**Team & Quality:**
+• {{contributorCount}} — Number of contributors
+• {{topContributors}} — Top contributor names
+• {{reviewCoverage}} — Review coverage (%)
+• {{avgMergeTime}} — Average merge time (hours)
+
+**Code Changes:**
+• {{totalLinesChanged}} — Total lines added/deleted
+• {{topChanges}} — Summary of top changes
+• {{complexityBreakdown}} — PR complexity distribution
+
 ## WRITING REQUIREMENTS:
 
 ### Structure & Format
 - Write exactly like a **professional technical report** about this repository
-- Use Markdown **## headers with emojis** for main sections:
-  - \`## 📈 Development Activity\`
-  - \`## 🔧 Key Changes\`  
-  - \`## 👥 Team Performance\`
+- Use Markdown **# headers with emojis** for main sections:
+  - \`# 📈 Development Activity\`
+  - \`# 🔧 Key Changes\`  
+  - \`# 👥 Team Performance\`
 - Each section should be **1-2 concise paragraphs maximum**
 
 ### Content Guidelines
@@ -804,7 +829,7 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
       name: 'Frontend Focused',
       style: 'frontend',
       description: 'Technical analysis focused on UI/UX and frontend changes with clear section headers',
-      systemPrompt: 'You are a frontend technical lead writing a digest about UI/UX and frontend development activity. Write like a technical report specifically focused on user-facing changes and frontend architecture. Always use proper Markdown formatting with ## headers and appropriate emojis for main sections to enable sidebar navigation. Focus on concrete frontend changes in the repository.',
+      systemPrompt: 'You are a frontend technical lead writing a digest about UI/UX and frontend development activity. Write like a technical report specifically focused on user-facing changes and frontend architecture. Always use proper Markdown formatting with # headers and appropriate emojis for main sections to enable sidebar navigation. Focus on concrete frontend changes in the repository.',
       userPromptTemplate: `Analyze this repository activity from a frontend development perspective:
 
 **REPOSITORY:** {{repositoryName}}  
@@ -818,15 +843,40 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
 **TOP FRONTEND CHANGES:**
 {{frontendChanges}}
 
+## AVAILABLE TEMPLATE VARIABLES:
+
+**Repository & Time:**
+• {{repositoryName}} — Repository name
+• {{dateRange}} — Date range (e.g., "Jan 1 - Jan 7, 2024")
+• {{dayCount}} — Number of days in period
+
+**Pull Requests:**
+• {{totalPRs}} — Total pull requests
+• {{mergedPRs}} — Merged pull requests
+• {{mergeRate}} — Merge success rate (%)
+• {{featureCount}} — Feature PRs
+• {{bugfixCount}} — Bug fix PRs
+
+**Team & Quality:**
+• {{contributorCount}} — Number of contributors
+• {{topContributors}} — Top contributor names
+• {{reviewCoverage}} — Review coverage (%)
+• {{avgMergeTime}} — Average merge time (hours)
+
+**Code Changes:**
+• {{totalLinesChanged}} — Total lines added/deleted
+• {{topChanges}} — Summary of top changes
+• {{complexityBreakdown}} — PR complexity distribution
+
 ## WRITING REQUIREMENTS:
 
 ### Structure & Format
 - Write like a **professional frontend technical report**
-- Use Markdown **## headers with emojis** for main sections:
-  - \`## 🎨 UI/UX Updates\`
-  - \`## 🏗️ Frontend Architecture\`
-  - \`## ✨ User Experience Improvements\`
-  - \`## 🚀 Performance & Optimization\`
+- Use Markdown **# headers with emojis** for main sections:
+  - \`# 🎨 UI/UX Updates\`
+  - \`# 🏗️ Frontend Architecture\`
+  - \`# ✨ User Experience Improvements\`
+  - \`# 🚀 Performance & Optimization\`
 - Each section should be **2-3 focused paragraphs maximum**
 
 ### Content Guidelines
@@ -854,7 +904,7 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
       name: 'Technical Journal',
       style: 'engaging-story',
       description: 'Engaging but factual technical reporting about repository development activity',
-      systemPrompt: 'You are a technical journalist writing an engaging but factual article about software development activity. Write like a technical report with engaging language covering this repository. Use engaging language but focus entirely on what actually happened in the codebase. Always use proper Markdown formatting with ## headers and appropriate emojis for main sections. No overly dramatic storytelling - keep it professional and repository-focused.',
+      systemPrompt: 'You are a technical journalist writing an engaging but factual article about software development activity. Write like a technical report with engaging language covering this repository. Use engaging language but focus entirely on what actually happened in the codebase. Always use proper Markdown formatting with # headers and appropriate emojis for main sections. No overly dramatic storytelling - keep it professional and repository-focused.',
       userPromptTemplate: `Write an engaging technical article about this development period:
 
 **REPOSITORY:** {{repositoryName}}  
@@ -869,15 +919,40 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
 **KEY DEVELOPMENT CHANGES:**
 {{topChanges}}
 
+## AVAILABLE TEMPLATE VARIABLES:
+
+**Repository & Time:**
+• {{repositoryName}} — Repository name
+• {{dateRange}} — Date range (e.g., "Jan 1 - Jan 7, 2024")
+• {{dayCount}} — Number of days in period
+
+**Pull Requests:**
+• {{totalPRs}} — Total pull requests
+• {{mergedPRs}} — Merged pull requests
+• {{mergeRate}} — Merge success rate (%)
+• {{featureCount}} — Feature PRs
+• {{bugfixCount}} — Bug fix PRs
+
+**Team & Quality:**
+• {{contributorCount}} — Number of contributors
+• {{topContributors}} — Top contributor names
+• {{reviewCoverage}} — Review coverage (%)
+• {{avgMergeTime}} — Average merge time (hours)
+
+**Code Changes:**
+• {{totalLinesChanged}} — Total lines added/deleted
+• {{topChanges}} — Summary of top changes
+• {{complexityBreakdown}} — PR complexity distribution
+
 ## WRITING REQUIREMENTS:
 
 ### Structure & Format
 - Write like an **engaging technical journal** about software development
-- Use Markdown **## headers with emojis** for main sections:
-  - \`## 🚀 Development Highlights\`
-  - \`## 💻 Code Changes & Features\`
-  - \`## 👥 Team Activity & Contributions\`
-  - \`## 🎯 Impact & Achievements\`
+- Use Markdown **# headers with emojis** for main sections:
+  - \`# 🚀 Development Highlights\`
+  - \`# 💻 Code Changes & Features\`
+  - \`# 👥 Team Activity & Contributions\`
+  - \`# 🎯 Impact & Achievements\`
 - Each section should be **2-4 engaging paragraphs**
 
 ### Content Guidelines  
@@ -907,7 +982,7 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
       name: 'Executive Summary',
       style: 'executive',
       description: 'Business-focused summary with clear metrics and strategic insights for leadership',
-      systemPrompt: 'You are writing an executive brief for business leaders and stakeholders. Focus entirely on business outcomes, team productivity, and strategic insights. Use business language, avoid technical jargon. Always use proper Markdown formatting with ## headers and appropriate business emojis for clear section organization. Present concrete results and actionable insights.',
+      systemPrompt: 'You are writing an executive brief for business leaders and stakeholders. Focus entirely on business outcomes, team productivity, and strategic insights. Use business language, avoid technical jargon. Always use proper Markdown formatting with # headers and appropriate business emojis for clear section organization. Present concrete results and actionable insights.',
       userPromptTemplate: `Provide an executive summary of development activity:
 
 **BUSINESS CONTEXT:**
@@ -925,15 +1000,40 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
 - Issues resolved: {{bugfixCount}}
 - Security/maintenance: {{maintenanceCount}}
 
+## AVAILABLE TEMPLATE VARIABLES:
+
+**Repository & Time:**
+• {{repositoryName}} — Repository name
+• {{dateRange}} — Date range (e.g., "Jan 1 - Jan 7, 2024")
+• {{dayCount}} — Number of days in period
+
+**Pull Requests:**
+• {{totalPRs}} — Total pull requests
+• {{mergedPRs}} — Merged pull requests
+• {{mergeRate}} — Merge success rate (%)
+• {{featureCount}} — Feature PRs
+• {{bugfixCount}} — Bug fix PRs
+
+**Team & Quality:**
+• {{contributorCount}} — Number of contributors
+• {{topContributors}} — Top contributor names
+• {{reviewCoverage}} — Review coverage (%)
+• {{avgMergeTime}} — Average merge time (hours)
+
+**Code Changes:**
+• {{totalLinesChanged}} — Total lines added/deleted
+• {{topChanges}} — Summary of top changes
+• {{complexityBreakdown}} — PR complexity distribution
+
 ## WRITING REQUIREMENTS:
 
 ### Structure & Format
 - Write like a **professional executive business report**
-- Use Markdown **## headers with business emojis** for main sections:
-  - \`## 📈 Development Performance\`
-  - \`## 🎯 Business Deliverables\`
-  - \`## 👥 Team Productivity\`
-  - \`## 💡 Strategic Recommendations\`
+- Use Markdown **# headers with business emojis** for main sections:
+  - \`# 📈 Development Performance\`
+  - \`# 🎯 Business Deliverables\`
+  - \`# 👥 Team Productivity\`
+  - \`# 💡 Strategic Recommendations\`
 - Each section should be **2-3 executive-focused paragraphs**
 
 ### Business Communication Guidelines
@@ -963,7 +1063,7 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
       name: 'Technical Deep Dive',
       style: 'technical',
       description: 'Comprehensive technical analysis with architectural insights and code quality assessment',
-      systemPrompt: 'You are a senior technical architect writing a detailed analysis for engineering teams. Focus on architectural patterns, code quality metrics, technical challenges, and engineering best practices. Use proper Markdown formatting with ## headers and appropriate technical emojis for clear organization. Write like a technical lead analyzing the codebase and development patterns.',
+      systemPrompt: 'You are a senior technical architect writing a detailed analysis for engineering teams. Focus on architectural patterns, code quality metrics, technical challenges, and engineering best practices. Use proper Markdown formatting with # headers and appropriate technical emojis for clear organization. Write like a technical lead analyzing the codebase and development patterns.',
       userPromptTemplate: `Provide a technical deep dive analysis:
 
 **TECHNICAL OVERVIEW:**
@@ -981,14 +1081,39 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
 
 ## WRITING REQUIREMENTS:
 
+## AVAILABLE TEMPLATE VARIABLES:
+
+**Repository & Time:**
+• {{repositoryName}} — Repository name
+• {{dateRange}} — Date range (e.g., "Jan 1 - Jan 7, 2024")
+• {{dayCount}} — Number of days in period
+
+**Pull Requests:**
+• {{totalPRs}} — Total pull requests
+• {{mergedPRs}} — Merged pull requests
+• {{mergeRate}} — Merge success rate (%)
+• {{featureCount}} — Feature PRs
+• {{bugfixCount}} — Bug fix PRs
+
+**Team & Quality:**
+• {{contributorCount}} — Number of contributors
+• {{topContributors}} — Top contributor names
+• {{reviewCoverage}} — Review coverage (%)
+• {{avgMergeTime}} — Average merge time (hours)
+
+**Code Changes:**
+• {{totalLinesChanged}} — Total lines added/deleted
+• {{topChanges}} — Summary of top changes
+• {{complexityBreakdown}} — PR complexity distribution
+
 ### Structure & Format
 - Write like a **senior technical architect's comprehensive analysis** for engineering teams
-- Use Markdown **## headers with technical emojis** for main sections:
-  - \`## 🔍 Code Quality Analysis\`
-  - \`## 🏗️ Architectural Changes & Patterns\`
-  - \`## ⚙️ Development Practices & Workflows\`
-  - \`## 🧪 Testing & Quality Assurance\`
-  - \`## 💡 Technical Recommendations\`
+- Use Markdown **# headers with technical emojis** for main sections:
+  - \`# 🔍 Code Quality Analysis\`
+  - \`# 🏗️ Architectural Changes & Patterns\`
+  - \`# ⚙️ Development Practices & Workflows\`
+  - \`# 🧪 Testing & Quality Assurance\`
+  - \`# 💡 Technical Recommendations\`
 - Each section should be **3-4 detailed technical paragraphs**
 
 ### Technical Analysis Guidelines

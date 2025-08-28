@@ -297,16 +297,41 @@
                                 class="form-textarea prompt-textarea"
                                 rows="8"
                                 placeholder="AI prompt will appear here based on your selected style..."
-                            >You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical report. Focus on actual repository activity and concrete changes. Always use proper Markdown formatting with ## headers and appropriate emojis for main sections.
+                            >You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical report. Focus on actual repository activity and concrete changes. Always use proper Markdown formatting with # headers and appropriate emojis for main sections.
+
+**AVAILABLE TEMPLATE VARIABLES:**
+
+**Repository & Time:**
+• {{repositoryName}} — Repository name
+• {{dateRange}} — Date range (e.g., "Jan 1 - Jan 7, 2024")
+• {{dayCount}} — Number of days in period
+
+**Pull Requests:**
+• {{totalPRs}} — Total pull requests
+• {{mergedPRs}} — Merged pull requests
+• {{mergeRate}} — Merge success rate (%)
+• {{featureCount}} — Feature PRs
+• {{bugfixCount}} — Bug fix PRs
+
+**Team & Quality:**
+• {{contributorCount}} — Number of contributors
+• {{topContributors}} — Top contributor names
+• {{reviewCoverage}} — Review coverage (%)
+• {{avgMergeTime}} — Average merge time (hours)
+
+**Code Changes:**
+• {{totalLinesChanged}} — Total lines added/deleted
+• {{topChanges}} — Summary of top changes
+• {{complexityBreakdown}} — PR complexity distribution
 
 **WRITING REQUIREMENTS:**
 
 ### Structure & Format
 - Write exactly like a **professional technical report** about this repository
-- Use Markdown **## headers with emojis** for main sections:
-  - `## 📈 Development Activity`
-  - `## 🔧 Key Changes`
-  - `## 👥 Team Performance`
+- Use Markdown **# headers with emojis** for main sections:
+  - `# 📈 Development Activity`
+  - `# 🔧 Key Changes`
+  - `# 👥 Team Performance`
 - Each section should be **1-2 concise paragraphs maximum**
 
 ### Content Guidelines
