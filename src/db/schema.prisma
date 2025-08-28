@@ -1,0 +1,389 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User Management Models
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String?  @map("full_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  // Relationships
+  roles         UserRole[]
+  apiKeys        ApiKey[]
+  preferences    UserPreference?
+  sessions       Session[]
+  notificationRules NotificationRule[]
+
+  @@map("users")
+}
+
+model Role {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  description String?
+  permissions String // JSON array of permission strings
+
+  // Relationships
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId   Int @map("user_id")
+  roleId   Int @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model ApiKey {
+  id        String   @id @default(cuid()) // e.g., "ak_123456789"
+  name      String
+  keyHash   String   @unique @map("key_hash") // Store hashed API key
+  userId    Int      @map("user_id")
+  isActive  Boolean  @default(true) @map("is_active")
+  expiresAt DateTime? @map("expires_at")
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([keyHash])
+  @@index([userId])
+  @@map("api_keys")
+}
+
+// Repository Management Models
+model Repo {
+  id            Int      @id @default(autoincrement())
+  path          String   @unique // e.g., "facebook/react"
+  name          String   // Display name
+  description   String?
+  active        Boolean  @default(true)
+  defaultBranch String   @default("main") @map("default_branch")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  digests Digest[]
+
+  @@index([path])
+  @@index([active])
+  @@map("repos")
+}
+
+// Digest and Job Models
+model Digest {
+  id              Int      @id @default(autoincrement())
+  repoId          Int      @map("repo_id")
+  dateFrom        DateTime @map("date_from")
+  dateTo          DateTime @map("date_to")
+  summaryMd       String?  @map("summary_md") // Markdown summary (legacy)
+  summaryHtml     String?  @map("summary_html") // HTML summary (structured)
+  summaryMarkdown String?  @map("summary_markdown") // Brief markdown summary
+  narrativeSummary String? @map("narrative_summary") // AI-generated narrative summary
+  summaryStyle    String?  @map("summary_style") // 'concise', 'frontend', 'engaging-story', etc.
+  customPrompt    String?  @map("custom_prompt") // Custom prompt for AI generation
+  statsJson       String   @map("stats_json") // JSON stats object
+  prDataJson      String?  @map("pr_data_json") // Raw PR data as JSON
+  createdAt       DateTime @default(now()) @map("created_at")
+  createdById     Int?     @map("created_by_id") // Optional, no foreign key
+
+  // Relationships
+  repo      Repo           @relation(fields: [repoId], references: [id], onDelete: Cascade)
+  jobs      Job[]
+  notifications Notification[]
+  notificationRecords NotificationRecord[]
+
+  @@index([repoId])
+  @@index([createdAt])
+  @@index([dateFrom, dateTo])
+  @@map("digests")
+}
+
+model Job {
+  id          String    @id @default(cuid()) // e.g., "job_123456789"
+  type        String    // "digest", "notification", etc.
+  status      String    // "PENDING", "RUNNING", "COMPLETED", "FAILED"
+  progress    Int       @default(0) // 0-100
+  paramsJson  String    @map("params_json") // JSON parameters
+  error       String?   // Error message if failed
+  startedAt   DateTime? @map("started_at")
+  finishedAt  DateTime? @map("finished_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdById Int?      @map("created_by_id") // Optional, no foreign key
+  digestId    Int?      @map("digest_id") // Optional link to digest
+
+  // Relationships
+  digest    Digest? @relation(fields: [digestId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([digestId])
+  @@map("jobs")
+}
+
+// Settings Model
+model Setting {
+  key       String   @id
+  valueJson String   @map("value_json") // JSON value
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+// Notification Models
+model Notification {
+  id          Int       @id @default(autoincrement())
+  type        String    // "digest_completed", "job_failed", etc.
+  channel     String    // "email", "slack", "web"
+  recipientId Int?      @map("recipient_id") // Optional, no foreign key
+  digestId    Int?      @map("digest_id")
+  status      String    @default("pending") // "pending", "sent", "failed"
+  subject     String?   // For email notifications
+  message     String    // Notification content
+  metadata    String?   // JSON metadata (slack user ID, etc.)
+  sentAt      DateTime? @map("sent_at")
+  error       String?   // Error message if failed
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relationships
+  digest    Digest? @relation(fields: [digestId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([channel])
+  @@index([type])
+  @@index([createdAt])
+  @@index([digestId])
+  @@map("notifications")
+}
+
+// User Preferences Model (for storing user-specific settings)
+model UserPreference {
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique @map("user_id")
+  frequency          String   @default("weekly") // "daily", "weekly", "monthly"
+  timeOfDay          String?  @map("time_of_day") // "09:00"
+  channels           String   @default("[]") // JSON array of channels
+  detailLevel        String   @default("concise") // "concise", "detailed"
+  subscribedRepoIds  String   @default("[]") @map("subscribed_repo_ids") // JSON array of repo IDs
+  slackUserId        String?  @map("slack_user_id")
+  emailAddress       String?  @map("email_address") // Override email
+  isEnabled          Boolean  @default(true) @map("is_enabled")
+  // Enhanced notification settings (JSON columns)
+  emailNotifications String   @default("{}") @map("email_notifications") // JSON: {enabled, address, frequency, format}
+  slackNotifications String   @default("{}") @map("slack_notifications") // JSON: {enabled, botToken, channel, username}
+  teamsNotifications String   @default("{}") @map("teams_notifications") // JSON: {enabled, webhookUrl, titleTemplate, themeColor}
+  webhookNotifications String @default("{}") @map("webhook_notifications") // JSON: {enabled, url, secret, method, headers}
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+
+// Webhook Configuration Model
+model WebhookConfig {
+  id        Int      @id @default(autoincrement())
+  url       String
+  secret    String?  // Webhook secret for verification
+  events    String   // JSON array of events to subscribe to
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  deliveries WebhookDelivery[]
+
+  @@map("webhook_configs")
+}
+
+model WebhookDelivery {
+  id             Int       @id @default(autoincrement())
+  webhookId      Int       @map("webhook_id")
+  event          String    // Event type
+  payload        String    // JSON payload
+  responseStatus Int?      @map("response_status") // HTTP status code
+  responseBody   String?   @map("response_body")
+  error          String?   // Error message if failed
+  deliveredAt    DateTime? @map("delivered_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  // Relationships
+  webhook WebhookConfig @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([event])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
+}
+
+// Notification Rules Model
+model NotificationRule {
+  id          Int      @id @default(autoincrement())
+  name        String   
+  type        String   // "digest_completed", "job_failed", "system_alert", etc.
+  conditions  String   // JSON conditions for triggering the rule
+  actions     String   // JSON actions to take when rule is triggered
+  channels    String   @default("[]") // JSON array of notification channels
+  enabled     Boolean  @default(true)
+  priority    Int      @default(5) // 1-10 priority level
+  userId      Int?     @map("user_id") // Optional user-specific rule
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  lastTriggered DateTime? @map("last_triggered")
+
+  // Relationships
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+  @@index([enabled])
+  @@index([userId])
+  @@map("notification_rules")
+}
+
+// Email Log Model (for tracking email delivery)
+model EmailLog {
+  id          Int       @id @default(autoincrement())
+  messageId   String    @unique @map("message_id")
+  provider    String    // SMTP provider used
+  recipients  String    // JSON array of recipient emails
+  subject     String
+  status      String    // "sent", "failed", "bounced"
+  error       String?   // Error message if failed
+  sentAt      DateTime? @map("sent_at")
+  metadata    String?   // JSON metadata (template used, etc.)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([status])
+  @@index([sentAt])
+  @@index([createdAt])
+  @@map("email_logs")
+}
+
+// Email Tracking Model (for opens/clicks)
+model EmailTracking {
+  id          Int      @id @default(autoincrement())
+  messageId   String   @map("message_id")
+  eventType   String   // "open", "click"
+  url         String?  // For click tracking
+  userAgent   String?  @map("user_agent")
+  ipAddress   String?  @map("ip_address")
+  timestamp   DateTime
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([messageId])
+  @@index([eventType])
+  @@index([timestamp])
+  @@map("email_tracking")
+}
+
+// Email Bounce Model (for bounce handling)
+model EmailBounce {
+  id              Int      @id @default(autoincrement())
+  messageId       String   @map("message_id")
+  recipient       String
+  bounceType      String   @map("bounce_type") // "Permanent", "Transient", etc.
+  bounceSubType   String?  @map("bounce_sub_type")
+  diagnosticCode  String?  @map("diagnostic_code")
+  timestamp       DateTime
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([messageId])
+  @@index([recipient])
+  @@index([bounceType])
+  @@map("email_bounces")
+}
+
+// Notification Template Model
+model NotificationTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  type        String   // "email", "slack", "webhook"
+  subject     String?  // For email templates
+  content     String   // Template content (HTML/Markdown/JSON)
+  variables   String   @default("[]") // JSON array of available variables
+  metadata    String?  // JSON metadata
+  enabled     Boolean  @default(true)
+  createdById Int?     @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([enabled])
+  @@map("notification_templates")
+}
+
+// Notification Record Model (for tracking sent notifications)
+model NotificationRecord {
+  id              Int       @id @default(autoincrement())
+  type            String    // Notification type
+  channels        String    // JSON array of channels used
+  recipientId     Int?      @map("recipient_id")
+  digestId        Int?      @map("digest_id")
+  templateId      Int?      @map("template_id")
+  status          String    @default("pending") // "pending", "sent", "failed", "retrying"
+  attempts        Int       @default(0)
+  maxRetries      Int       @default(3) @map("max_retries")
+  failedDeliveries Int      @default(0) @map("failed_deliveries")
+  lastAttempt     DateTime? @map("last_attempt")
+  scheduledFor    DateTime? @map("scheduled_for")
+  deliveredAt     DateTime? @map("delivered_at")
+  error           String?   // Error message if failed
+  metadata        String?   // JSON metadata
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // Relationships
+  digest Digest? @relation(fields: [digestId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([status])
+  @@index([recipientId])
+  @@index([digestId])
+  @@index([scheduledFor])
+  @@map("notification_records")
+}
+
+// Session Management (for web authentication)
+model Session {
+  id        String   @id @default(cuid())
+  userId    Int      @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}

@@ -1,0 +1,405 @@
+<!-- Dashboard Header -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    <span class="hero-title-primary">Developer Digest</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Create a personalized developer newsletter from your GitHub repository activity.
+                </p>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-card glass-container" 
+                     hx-get="/fragments/stats/digests"
+                     hx-trigger="load"
+                     hx-target="#totalDigests"
+                     hx-swap="innerHTML">
+                    <div class="stat-card-value" id="totalDigests">
+                        <div class="skeleton skeleton--text" style="width: 40px; height: 2rem;"></div>
+                    </div>
+                    <div class="stat-card-label">Total Digests</div>
+                </div>
+                <div class="stat-card glass-container"
+                     hx-get="/fragments/stats/repositories"
+                     hx-trigger="load"
+                     hx-target="#activeRepos"
+                     hx-swap="innerHTML">
+                    <div class="stat-card-value" id="activeRepos">
+                        <div class="skeleton skeleton--text" style="width: 40px; height: 2rem;"></div>
+                    </div>
+                    <div class="stat-card-label">Tracked Repos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Digest Generation Form -->
+<section class="form-section">
+    <div class="container">
+        <div class="form-card glass-container glass-container--elevated">
+            <form hx-post="/fragments/digest/create"
+                  hx-target="#digest-form-result"
+                  hx-swap="innerHTML"
+                  class="digest-form" 
+                  novalidate>
+                <input type="hidden" name="csrfToken" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                
+                <!-- Repository Selection -->
+                <div class="form-group">
+                    <label for="repositories" class="form-label form-label--required">
+                        <span class="form-label-text">Select Repositories</span>
+                        <span class="form-label-icon">*</span>
+                    </label>
+                    <div class="form-input-wrapper" 
+                         hx-get="/fragments/repositories"
+                         hx-trigger="load"
+                         hx-target="#repositories-container"
+                         hx-swap="innerHTML">
+                        <div id="repositories-container" class="repositories-container">
+                            <select 
+                                id="repositories" 
+                                name="repositories" 
+                                class="form-select form-select--enhanced"
+                                multiple
+                                required
+                                aria-describedby="repositories-help"
+                            >
+                                <option value="" disabled>Loading repositories...</option>
+                            </select>
+                            <div class="form-select-controls">
+                                <button type="button" class="btn btn--outline btn--sm select-all-btn" disabled>
+                                    <div class="loading-spinner loading-spinner--sm htmx-indicator"></div>
+                                    Select All
+                                </button>
+                                <button type="button" class="btn btn--ghost btn--sm clear-all-btn" disabled>
+                                    Clear All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="repositories-help" class="form-help">
+                        Select one or more repositories to include in your digest
+                    </div>
+                </div>
+                    
+                <!-- Time Range & Format Selection -->
+                <div class="form-row">
+                    <div class="form-group form-group--half">
+                        <label for="timeRange" class="form-label form-label--required">
+                            <span class="form-label-text">Time Range</span>
+                            <span class="form-label-icon">*</span>
+                        </label>
+                        <div class="form-select-wrapper">
+                            <select id="timeRange" name="timeRange" class="form-select form-select--enhanced" required>
+                                <option value="">Select time range</option>
+                                <option value="1">Last 24 hours</option>
+                                <option value="3">Last 3 days</option>
+                                <option value="7" selected>Last week</option>
+                                <option value="14">Last 2 weeks</option>
+                                <option value="30">Last month</option>
+                                <option value="custom">Custom range</option>
+                            </select>
+                            <div class="form-select-icon">⏰</div>
+                        </div>
+                    </div>
+                    <div class="form-group form-group--half">
+                        <label for="format" class="form-label">
+                            <span class="form-label-text">Output Format</span>
+                        </label>
+                        <div class="form-select-wrapper">
+                            <select id="format" name="format" class="form-select form-select--enhanced">
+                                <option value="html" selected>HTML (Web View)</option>
+                                <option value="markdown">Markdown</option>
+                                <option value="email">Email Template</option>
+                            </select>
+                            <div class="form-select-icon">📄</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Custom Date Range (Hidden by default) -->
+                <div id="customDateRange" class="form-row" style="display: none;">
+                    <div class="form-group form-group--half">
+                        <label for="startDate" class="form-label form-label--required">Start Date</label>
+                        <input 
+                            type="date" 
+                            id="startDate" 
+                            name="startDate" 
+                            class="form-input"
+                        >
+                    </div>
+                    <div class="form-group form-group--half">
+                        <label for="endDate" class="form-label form-label--required">End Date</label>
+                        <input 
+                            type="date" 
+                            id="endDate" 
+                            name="endDate" 
+                            class="form-input"
+                            max="<%= new Date().toISOString().split('T')[0] %>"
+                        >
+                    </div>
+                </div>
+                
+                <!-- Advanced Options -->
+                <div class="form-group">
+                    <div class="form-section-header">
+                        <span class="form-section-title">Content Options</span>
+                        <span class="form-section-subtitle">Choose what to include in your digest</span>
+                    </div>
+                    <div class="form-toggles form-toggles--grid">
+                        <div class="form-toggle form-toggle--card">
+                            <div class="form-toggle-input">
+                                <input 
+                                    type="checkbox" 
+                                    id="includePRs" 
+                                    name="includePRs" 
+                                    class="form-checkbox" 
+                                    checked
+                                >
+                                <label for="includePRs" class="form-checkbox-label"></label>
+                            </div>
+                            <div class="form-toggle-content">
+                                <div class="form-toggle-icon">🔄</div>
+                                <div class="form-toggle-text">
+                                    <span class="toggle-title">Include Pull Requests</span>
+                                    <span class="toggle-description">Merged and closed PRs</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-toggle form-toggle--card">
+                            <div class="form-toggle-input">
+                                <input 
+                                    type="checkbox" 
+                                    id="includeIssues" 
+                                    name="includeIssues" 
+                                    class="form-checkbox"
+                                >
+                                <label for="includeIssues" class="form-checkbox-label"></label>
+                            </div>
+                            <div class="form-toggle-content">
+                                <div class="form-toggle-icon">🐛</div>
+                                <div class="form-toggle-text">
+                                    <span class="toggle-title">Include Issues</span>
+                                    <span class="toggle-description">Closed and resolved issues</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-toggle form-toggle--card">
+                            <div class="form-toggle-input">
+                                <input 
+                                    type="checkbox" 
+                                    id="includeCommits" 
+                                    name="includeCommits" 
+                                    class="form-checkbox"
+                                >
+                                <label for="includeCommits" class="form-checkbox-label"></label>
+                            </div>
+                            <div class="form-toggle-content">
+                                <div class="form-toggle-icon">📝</div>
+                                <div class="form-toggle-text">
+                                    <span class="toggle-title">Include Commits</span>
+                                    <span class="toggle-description">Direct commits to main branch</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Style Options -->
+                <div class="form-group">
+                    <div class="form-section-header">
+                        <span class="form-section-title">Summary Style</span>
+                        <span class="form-section-subtitle">Choose how your digest summary should be written</span>
+                    </div>
+                    
+                    <div class="summary-styles">
+                        <!-- Style Selection -->
+                        <div class="style-selection">
+                            <div class="style-option">
+                                <input type="radio" id="style-concise" name="summaryStyle" value="concise" class="style-radio" checked>
+                                <label for="style-concise" class="style-label">
+                                    <div class="style-icon">📊</div>
+                                    <div class="style-content">
+                                        <span class="style-title">Concise Technical</span>
+                                        <span class="style-description">Brief, structured technical summary with clear sections for sidebar navigation</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="style-option">
+                                <input type="radio" id="style-frontend" name="summaryStyle" value="frontend" class="style-radio">
+                                <label for="style-frontend" class="style-label">
+                                    <div class="style-icon">🎨</div>
+                                    <div class="style-content">
+                                        <span class="style-title">Frontend Focused</span>
+                                        <span class="style-description">Technical analysis focused on UI/UX and frontend changes with clear section headers</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="style-option">
+                                <input type="radio" id="style-story" name="summaryStyle" value="engaging-story" class="style-radio">
+                                <label for="style-story" class="style-label">
+                                    <div class="style-icon">📚</div>
+                                    <div class="style-content">
+                                        <span class="style-title">Technical Journal</span>
+                                        <span class="style-description">Engaging but factual technical reporting about repository development activity</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="style-option">
+                                <input type="radio" id="style-executive" name="summaryStyle" value="executive" class="style-radio">
+                                <label for="style-executive" class="style-label">
+                                    <div class="style-icon">👔</div>
+                                    <div class="style-content">
+                                        <span class="style-title">Executive Summary</span>
+                                        <span class="style-description">Business-focused summary with clear metrics and strategic insights for leadership</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="style-option">
+                                <input type="radio" id="style-technical" name="summaryStyle" value="technical" class="style-radio">
+                                <label for="style-technical" class="style-label">
+                                    <div class="style-icon">🔧</div>
+                                    <div class="style-content">
+                                        <span class="style-title">Technical Deep Dive</span>
+                                        <span class="style-description">Comprehensive technical analysis with architectural insights and code quality assessment</span>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <div class="style-option">
+                                <input type="radio" id="style-custom" name="summaryStyle" value="custom" class="style-radio">
+                                <label for="style-custom" class="style-label">
+                                    <div class="style-icon">✏️</div>
+                                    <div class="style-content">
+                                        <span class="style-title">Custom Prompt</span>
+                                        <span class="style-description">Define your own custom prompt for AI generation</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Editable Prompt -->
+                        <div class="prompt-editor">
+                            <label for="summaryPrompt" class="form-label">
+                                <span class="form-label-text">AI Prompt</span>
+                                <span class="form-label-help">Edit the prompt to customize how the AI writes your summary</span>
+                            </label>
+                            <textarea 
+                                id="summaryPrompt" 
+                                name="summaryPrompt" 
+                                class="form-textarea prompt-textarea"
+                                rows="8"
+                                placeholder="AI prompt will appear here based on your selected style..."
+                            >You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical news article. Focus on actual repository activity and concrete changes. Always create clear subtitles using ## headers for main sections.
+
+Create a concise technical summary of this repository activity:
+- Write exactly like a technical news article about this repository
+- Use ## headers for main sections (e.g., ## Development Activity, ## Key Changes, ## Team Performance)
+- Keep each section 1-2 sentences maximum
+- Focus ONLY on what actually happened in the repository
+- Mention specific PR numbers, contributor names, and technical details
+- No creative storytelling - stick to facts about the codebase
+- Total length: 3-4 short paragraphs maximum</textarea>
+                            <div class="form-help">
+                                <span class="help-icon">💡</span>
+                                <span class="help-text">
+                                    Use template variables like {{repositoryName}}, {{dateRange}}, {{totalPRs}}, {{contributorCount}} in your prompt.
+                                    <button type="button" class="help-link" id="viewVariablesBtn">View all variables</button>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Template Variables Help -->
+                        <div id="templateVariables" class="template-variables" style="display: none;">
+                            <div class="variables-header">
+                                <span class="variables-title">Available Template Variables</span>
+                                <button type="button" class="variables-close" id="closeVariablesBtn">×</button>
+                            </div>
+                            <div class="variables-grid">
+                                <div class="variable-group">
+                                    <div class="variable-group-title">Repository & Time</div>
+                                    <div class="variable-item"><code>{{repositoryName}}</code> - Repository name</div>
+                                    <div class="variable-item"><code>{{dateRange}}</code> - Date range (e.g., "Jan 1 - Jan 7, 2024")</div>
+                                    <div class="variable-item"><code>{{dayCount}}</code> - Number of days in period</div>
+                                </div>
+                                <div class="variable-group">
+                                    <div class="variable-group-title">Pull Requests</div>
+                                    <div class="variable-item"><code>{{totalPRs}}</code> - Total pull requests</div>
+                                    <div class="variable-item"><code>{{mergedPRs}}</code> - Merged pull requests</div>
+                                    <div class="variable-item"><code>{{mergeRate}}</code> - Merge success rate (%)</div>
+                                    <div class="variable-item"><code>{{featureCount}}</code> - Feature PRs</div>
+                                    <div class="variable-item"><code>{{bugfixCount}}</code> - Bug fix PRs</div>
+                                </div>
+                                <div class="variable-group">
+                                    <div class="variable-group-title">Team & Quality</div>
+                                    <div class="variable-item"><code>{{contributorCount}}</code> - Number of contributors</div>
+                                    <div class="variable-item"><code>{{topContributors}}</code> - Top contributor names</div>
+                                    <div class="variable-item"><code>{{reviewCoverage}}</code> - Review coverage (%)</div>
+                                    <div class="variable-item"><code>{{avgMergeTime}}</code> - Average merge time (hours)</div>
+                                </div>
+                                <div class="variable-group">
+                                    <div class="variable-group-title">Code Changes</div>
+                                    <div class="variable-item"><code>{{totalLinesChanged}}</code> - Total lines added/deleted</div>
+                                    <div class="variable-item"><code>{{topChanges}}</code> - Summary of top changes</div>
+                                    <div class="variable-item"><code>{{complexityBreakdown}}</code> - PR complexity distribution</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary btn--xl btn--elevated">
+                        <span class="btn-icon">🚀</span>
+                        <span class="btn-text">Generate Digest</span>
+                        <span class="btn-spinner loading-spinner loading-spinner--sm htmx-indicator"></span>
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Form Result Area -->
+            <div id="digest-form-result" class="form-result" style="margin-top: var(--space-4);"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Digests -->
+<section class="digests-section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-header-content">
+                <h2 class="section-title">Recent Digests</h2>
+                <p class="section-subtitle">View and manage your generated newsletters</p>
+            </div>
+            <div class="section-actions">
+                <a href="/archive" class="btn btn--outline btn--sm">
+                    <span class="btn-icon">📚</span>
+                    View All Digests
+                </a>
+            </div>
+        </div>
+        
+        <div class="digests-container"
+             hx-get="/fragments/digests/recent"
+             hx-trigger="load, digest-created from:body"
+             hx-target="#recentDigests"
+             hx-swap="innerHTML"
+             data-auto-refresh="30000">
+            <div id="recentDigests" class="digest-grid">
+                <!-- Loading skeleton for recent digests -->
+                <div class="digest-grid--loading glass-container">
+                    <div class="loading-spinner loading-spinner--lg"></div>
+                    <p class="loading-text">Loading recent digests...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

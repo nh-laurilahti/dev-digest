@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Dev Digest - Design System Demo</title>
+    
+    <!-- Load CSS Design System -->
+    <link rel="stylesheet" href="/static/css/design-system.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+</head>
+<body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <!-- Demo Container -->
+    <div class="container--xl py-8">
+        <!-- Header -->
+        <header class="mb-12">
+            <h1 class="text-h1 text-center">Daily Dev Digest</h1>
+            <p class="text-body-large text-center text-secondary">Design System Demo</p>
+        </header>
+
+        <!-- Typography Demo -->
+        <section class="mb-16">
+            <h2 class="text-h2">Typography System</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-h3">Headings</h3>
+                    <h1 class="text-h1">Heading 1</h1>
+                    <h2 class="text-h2">Heading 2</h2>
+                    <h3 class="text-h3">Heading 3</h3>
+                    <h4 class="text-h4">Heading 4</h4>
+                    <h5 class="text-h5">Heading 5</h5>
+                    <h6 class="text-h6">Heading 6</h6>
+                </div>
+                <div>
+                    <h3 class="text-h3">Body Text</h3>
+                    <p class="text-body">This is regular body text with proper line height and spacing.</p>
+                    <p class="text-body-large">This is large body text for emphasis.</p>
+                    <p class="text-body-small">This is small body text for captions.</p>
+                    <p class="text-eyebrow">This is eyebrow text</p>
+                    <p class="text-caption">This is caption text</p>
+                    <code class="text-code">inline code example</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- Color Palette Demo -->
+        <section class="mb-16">
+            <h2 class="text-h2">Color Palette</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="card p-4">
+                    <div class="bg-primary h-12 rounded mb-3"></div>
+                    <div class="text-caption">Primary Background</div>
+                </div>
+                <div class="card p-4">
+                    <div class="bg-secondary h-12 rounded mb-3"></div>
+                    <div class="text-caption">Secondary Background</div>
+                </div>
+                <div class="card p-4">
+                    <div class="bg-tertiary h-12 rounded mb-3"></div>
+                    <div class="text-caption">Tertiary Background</div>
+                </div>
+                <div class="card p-4">
+                    <div class="bg-amber h-12 rounded mb-3"></div>
+                    <div class="text-caption">Brand Amber</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Button Demo -->
+        <section class="mb-16">
+            <h2 class="text-h2">Button System</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-h3 mb-4">Button Variants</h3>
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <button class="btn btn--primary">Primary</button>
+                        <button class="btn btn--secondary">Secondary</button>
+                        <button class="btn btn--ghost">Ghost</button>
+                        <button class="btn btn--outline">Outline</button>
+                    </div>
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        <button class="btn btn--success">Success</button>
+                        <button class="btn btn--danger">Danger</button>
+                        <button class="btn btn--primary" disabled>Disabled</button>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-h3 mb-4">Button Sizes</h3>
+                    <div class="flex flex-wrap items-center gap-3 mb-4">
+                        <button class="btn btn--primary btn--sm">Small</button>
+                        <button class="btn btn--primary">Default</button>
+                        <button class="btn btn--primary btn--lg">Large</button>
+                        <button class="btn btn--primary btn--xl">Extra Large</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="btn btn--primary btn--icon">🚀</button>
+                        <button class="btn btn--secondary btn--icon">⚙️</button>
+                        <button class="btn btn--ghost btn--icon">❤️</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Glass Container Demo -->
+        <section class="mb-16">
+            <h2 class="text-h2">Glass Containers</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="glass-container p-6">
+                    <h3 class="text-h4 mb-3">Default Glass</h3>
+                    <p class="text-body-small">Subtle glass effect with noise texture overlay.</p>
+                </div>
+                <div class="glass-container glass-container--elevated p-6">
+                    <h3 class="text-h4 mb-3">Elevated Glass</h3>
+                    <p class="text-body-small">Enhanced shadow and hover effects.</p>
+                </div>
+                <div class="glass-container glass-container--prominent p-6">
+                    <h3 class="text-h4 mb-3">Prominent Glass</h3>
+                    <p class="text-body-small">More visible glass effect for emphasis.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Card Demo -->
+        <section class="mb-16">
+            <h2 class="text-h2">Card Components</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Regular Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Regular Card</h3>
+                        <p class="card-subtitle">With header and body sections</p>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-body-small">This is a standard card component with clean styling and proper spacing.</p>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn--primary btn--sm">Action</button>
+                    </div>
+                </div>
+
+                <!-- Glass Card -->
+                <div class="card card--glass">
+                    <div class="card-header">
+                        <h3 class="card-title">Glass Card</h3>
+                        <p class="card-subtitle">With translucent background</p>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-body-small">Glass card variant with backdrop blur and noise texture.</p>
+                    </div>
+                </div>
+
+                <!-- Stat Card -->
+                <div class="card stat-card">
+                    <div class="stat-card-value">1,247</div>
+                    <div class="stat-card-label">Total Digests</div>
+                    <div class="stat-card-change stat-card-change--positive">
+                        +12.5% from last week
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Form Demo -->
+        <section class="mb-16">
+            <h2 class="text-h2">Form Components</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Regular Forms -->
+                <div class="glass-container p-6">
+                    <h3 class="text-h3 mb-6">Regular Forms</h3>
+                    <form>
+                        <div class="form-group">
+                            <label class="form-label form-label--required">Email</label>
+                            <input type="email" class="form-input" placeholder="Enter your email">
+                            <div class="form-help">We'll never share your email.</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Message</label>
+                            <textarea class="form-input form-textarea" placeholder="Your message here"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Repository</label>
+                            <select class="form-input form-select">
+                                <option>Choose repository...</option>
+                                <option>user/repo-1</option>
+                                <option>user/repo-2</option>
+                            </select>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-checkbox" id="newsletter">
+                            <label class="form-check-label" for="newsletter">Subscribe to newsletter</label>
+                        </div>
+                        <button type="submit" class="btn btn--primary mt-4">Submit</button>
+                    </form>
+                </div>
+
+                <!-- Floating Label Forms -->
+                <div class="glass-container p-6">
+                    <h3 class="text-h3 mb-6">Floating Labels</h3>
+                    <form>
+                        <div class="form-group">
+                            <div class="form-floating">
+                                <input type="text" class="form-input" id="floating-name" placeholder=" ">
+                                <label class="form-label" for="floating-name">Full Name</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-floating">
+                                <input type="email" class="form-input" id="floating-email" placeholder=" ">
+                                <label class="form-label" for="floating-email">Email Address</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Enable Notifications</label>
+                            <div class="form-switch">
+                                <input type="checkbox" id="notifications">
+                                <span class="slider"></span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn--secondary mt-4">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Badge Demo -->
+        <section class="mb-16">
+            <h2 class="text-h2">Badge System</h2>
+            <div class="flex flex-wrap gap-3 mb-4">
+                <span class="badge badge--primary">Primary</span>
+                <span class="badge badge--secondary">Secondary</span>
+                <span class="badge badge--success">Success</span>
+                <span class="badge badge--error">Error</span>
+                <span class="badge badge--warning">Warning</span>
+                <span class="badge badge--info">Info</span>
+            </div>
+        </section>
+
+        <!-- Loading States -->
+        <section class="mb-16">
+            <h2 class="text-h2">Loading States</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-container p-6">
+                    <h3 class="text-h3 mb-4">Spinners</h3>
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="loading-spinner loading-spinner--sm"></span>
+                        <span class="loading-spinner"></span>
+                        <span class="loading-spinner loading-spinner--lg"></span>
+                    </div>
+                    <button class="btn btn--primary" disabled>
+                        <span class="loading-spinner loading-spinner--sm"></span>
+                        Loading...
+                    </button>
+                </div>
+                <div class="glass-container p-6">
+                    <h3 class="text-h3 mb-4">Skeletons</h3>
+                    <div class="skeleton skeleton--title mb-2"></div>
+                    <div class="skeleton skeleton--text mb-1"></div>
+                    <div class="skeleton skeleton--text mb-1" style="width: 80%;"></div>
+                    <div class="skeleton skeleton--text" style="width: 60%;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bento Grid Layout -->
+        <section class="mb-16">
+            <h2 class="text-h2">Bento Grid Layout</h2>
+            <div class="bento-grid">
+                <div class="bento-item bento-item--large">
+                    <h3 class="text-h3 mb-4">Large Item</h3>
+                    <p class="text-body-small">This item spans 2x2 grid cells, perfect for highlighting important content or data visualizations.</p>
+                    <div class="progress mt-6">
+                        <div class="progress-bar" style="width: 75%;"></div>
+                    </div>
+                </div>
+                <div class="bento-item">
+                    <h4 class="text-h4 mb-3">Regular Item</h4>
+                    <p class="text-body-small">Standard grid item with default sizing.</p>
+                </div>
+                <div class="bento-item">
+                    <h4 class="text-h4 mb-3">Another Item</h4>
+                    <div class="stat-card-value text-amber">42</div>
+                    <div class="stat-card-label">Active Users</div>
+                </div>
+                <div class="bento-item bento-item--wide">
+                    <h4 class="text-h4 mb-3">Wide Item</h4>
+                    <p class="text-body-small">This item spans 2 columns horizontally.</p>
+                    <div class="flex gap-2 mt-4">
+                        <button class="btn btn--secondary btn--sm">View</button>
+                        <button class="btn btn--ghost btn--sm">Edit</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Layout Demo -->
+        <section class="mb-16">
+            <h2 class="text-h2">Dashboard Preview</h2>
+            <div class="glass-container p-2" style="height: 400px;">
+                <div class="dashboard-grid h-full">
+                    <div class="dashboard-sidebar p-4">
+                        <h3 class="text-h5 mb-4">Navigation</h3>
+                        <nav>
+                            <a href="#" class="block py-2 px-3 text-sm text-secondary hover:text-primary hover:bg-tertiary rounded transition-colors">Dashboard</a>
+                            <a href="#" class="block py-2 px-3 text-sm text-secondary hover:text-primary hover:bg-tertiary rounded transition-colors">Digests</a>
+                            <a href="#" class="block py-2 px-3 text-sm text-secondary hover:text-primary hover:bg-tertiary rounded transition-colors">Repositories</a>
+                            <a href="#" class="block py-2 px-3 text-sm text-secondary hover:text-primary hover:bg-tertiary rounded transition-colors">Settings</a>
+                        </nav>
+                    </div>
+                    <div class="dashboard-header">
+                        <h1 class="text-h4 mb-0">Dashboard</h1>
+                    </div>
+                    <div class="dashboard-main">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="card stat-card">
+                                <div class="stat-card-value">156</div>
+                                <div class="stat-card-label">Total PRs</div>
+                            </div>
+                            <div class="card stat-card">
+                                <div class="stat-card-value">23</div>
+                                <div class="stat-card-label">Open Issues</div>
+                            </div>
+                            <div class="card stat-card">
+                                <div class="stat-card-value">5</div>
+                                <div class="stat-card-label">Repositories</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center py-8 border-t border-translucent">
+            <p class="text-caption">Daily Dev Digest Design System • Built with Linear-inspired aesthetics</p>
+        </footer>
+    </div>
+</body>
+</html>

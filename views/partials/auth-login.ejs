@@ -1,0 +1,267 @@
+<div class="auth-container">
+    <div class="auth-content">
+        <!-- Auth Header -->
+        <div class="auth-header">
+            <div class="auth-logo">
+                <span class="brand-icon">📊</span>
+                <h1 class="auth-title">Sign in to Daily Dev Digest</h1>
+            </div>
+            <p class="auth-subtitle">
+                Access your personalized developer newsletter dashboard
+            </p>
+        </div>
+        
+        <!-- Sign In Form -->
+        <div class="glass-container glass-container--prominent">
+            <form action="/api/auth/login" method="POST" class="auth-form" novalidate>
+                <input type="hidden" name="csrfToken" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="email" class="form-label form-label--required">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-input <%= typeof errors !== 'undefined' && errors.email ? 'form-input--error' : '' %>" 
+                        placeholder="Enter your email address"
+                        value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>"
+                        required
+                        autocomplete="email"
+                        aria-describedby="<%= typeof errors !== 'undefined' && errors.email ? 'email-error' : '' %>"
+                    >
+                    <% if (typeof errors !== 'undefined' && errors.email) { %>
+                        <div id="email-error" class="form-error" role="alert">
+                            <span aria-hidden="true">⚠️</span>
+                            <%= errors.email %>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="password" class="form-label form-label--required">Password</label>
+                    <div class="form-input-group">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input <%= typeof errors !== 'undefined' && errors.password ? 'form-input--error' : '' %>" 
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                            aria-describedby="<%= typeof errors !== 'undefined' && errors.password ? 'password-error' : '' %>"
+                        >
+                        <button 
+                            type="button" 
+                            class="form-input-addon btn btn--ghost btn--icon btn--sm"
+                            aria-label="Toggle password visibility"
+                            data-toggle-password="password"
+                        >
+                            <span class="password-toggle-icon">👁️</span>
+                        </button>
+                    </div>
+                    <% if (typeof errors !== 'undefined' && errors.password) { %>
+                        <div id="password-error" class="form-error" role="alert">
+                            <span aria-hidden="true">⚠️</span>
+                            <%= errors.password %>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Remember Me & Forgot Password -->
+                <div class="form-row">
+                    <div class="form-check">
+                        <input 
+                            type="checkbox" 
+                            id="rememberMe" 
+                            name="rememberMe" 
+                            class="form-checkbox"
+                            <%= typeof formData !== 'undefined' && formData.rememberMe ? 'checked' : '' %>
+                        >
+                        <label for="rememberMe" class="form-check-label">
+                            Remember me for 30 days
+                        </label>
+                    </div>
+                    <a href="/auth/forgot-password" class="auth-link">
+                        Forgot password?
+                    </a>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn--primary btn--lg btn--block">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-spinner loading-spinner loading-spinner--sm" style="display: none;"></span>
+                </button>
+                
+                <!-- General Error Message -->
+                <% if (typeof errors !== 'undefined' && errors.general) { %>
+                    <div class="form-error form-error--general" role="alert">
+                        <span aria-hidden="true">❌</span>
+                        <%= errors.general %>
+                    </div>
+                <% } %>
+            </form>
+        </div>
+        
+        <!-- Auth Footer -->
+        <div class="auth-footer">
+            <p class="auth-footer-text">
+                Don't have an account?
+                <a href="/auth/register" class="auth-link auth-link--primary">
+                    Create one for free
+                </a>
+            </p>
+        </div>
+        
+        <!-- Security Notice -->
+        <div class="auth-security">
+            <div class="security-badge">
+                <span class="security-icon">🔒</span>
+                <div class="security-text">
+                    <strong>Secure Sign In</strong>
+                    <p>Your data is protected with enterprise-grade security</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form submission handling
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.auth-form');
+        const submitButton = form.querySelector('button[type="submit"]');
+        const buttonText = submitButton.querySelector('.btn-text');
+        const buttonSpinner = submitButton.querySelector('.btn-spinner');
+        
+        // Form validation
+        function validateForm() {
+            const email = form.querySelector('#email').value.trim();
+            const password = form.querySelector('#password').value;
+            
+            let isValid = true;
+            
+            // Clear previous errors
+            form.querySelectorAll('.form-error').forEach(error => {
+                if (!error.classList.contains('form-error--general')) {
+                    error.remove();
+                }
+            });
+            form.querySelectorAll('.form-input--error').forEach(input => {
+                input.classList.remove('form-input--error');
+            });
+            
+            // Email validation
+            if (!email) {
+                showFieldError('email', 'Email address is required');
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showFieldError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+            
+            // Password validation
+            if (!password) {
+                showFieldError('password', 'Password is required');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        function showFieldError(fieldName, message) {
+            const field = form.querySelector(`#${fieldName}`);
+            const formGroup = field.closest('.form-group');
+            
+            field.classList.add('form-input--error');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'form-error';
+            errorDiv.setAttribute('role', 'alert');
+            errorDiv.innerHTML = `<span aria-hidden="true">⚠️</span> ${message}`;
+            
+            formGroup.appendChild(errorDiv);
+        }
+        
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Show loading state
+            submitButton.disabled = true;
+            buttonText.textContent = 'Signing In...';
+            buttonSpinner.style.display = 'inline-block';
+            
+            // Submit form
+            const formData = new FormData(form);
+            
+            fetch('/api/auth/login', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store tokens if needed
+                    if (data.data.tokens) {
+                        localStorage.setItem('accessToken', data.data.tokens.accessToken);
+                        if (data.data.tokens.refreshToken) {
+                            localStorage.setItem('refreshToken', data.data.tokens.refreshToken);
+                        }
+                    }
+                    
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard';
+                } else {
+                    throw new Error(data.error?.message || 'Login failed');
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                
+                // Show error message
+                let errorContainer = form.querySelector('.form-error--general');
+                if (!errorContainer) {
+                    errorContainer = document.createElement('div');
+                    errorContainer.className = 'form-error form-error--general';
+                    errorContainer.setAttribute('role', 'alert');
+                    form.appendChild(errorContainer);
+                }
+                
+                errorContainer.innerHTML = `<span aria-hidden="true">❌</span> ${error.message}`;
+                
+                // Reset button state
+                submitButton.disabled = false;
+                buttonText.textContent = 'Sign In';
+                buttonSpinner.style.display = 'none';
+            });
+        });
+        
+        // Password toggle
+        const passwordToggle = document.querySelector('[data-toggle-password]');
+        if (passwordToggle) {
+            passwordToggle.addEventListener('click', function() {
+                const passwordInput = document.querySelector('#password');
+                const icon = this.querySelector('.password-toggle-icon');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.textContent = '🙈';
+                    this.setAttribute('aria-label', 'Hide password');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.textContent = '👁️';
+                    this.setAttribute('aria-label', 'Show password');
+                }
+            });
+        }
+    });
+</script>

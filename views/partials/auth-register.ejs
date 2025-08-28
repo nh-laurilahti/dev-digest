@@ -1,0 +1,391 @@
+<div class="auth-container">
+    <div class="auth-content">
+        <!-- Auth Header -->
+        <div class="auth-header">
+            <div class="auth-logo">
+                <span class="brand-icon">📊</span>
+                <h1 class="auth-title">Create your Daily Dev Digest account</h1>
+            </div>
+            <p class="auth-subtitle">
+                Start generating personalized developer newsletters from your GitHub repositories
+            </p>
+        </div>
+        
+        <!-- Registration Form -->
+        <div class="glass-container glass-container--prominent">
+            <form action="/api/auth/register" method="POST" class="auth-form" novalidate>
+                <input type="hidden" name="csrfToken" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+                
+                <!-- Username Field -->
+                <div class="form-group">
+                    <label for="username" class="form-label form-label--required">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        class="form-input <%= typeof errors !== 'undefined' && errors.username ? 'form-input--error' : '' %>" 
+                        placeholder="Choose a unique username"
+                        value="<%= typeof formData !== 'undefined' && formData.username ? formData.username : '' %>"
+                        required
+                        autocomplete="username"
+                        minlength="3"
+                        maxlength="20"
+                        pattern="^[a-zA-Z0-9_-]+$"
+                        aria-describedby="<%= typeof errors !== 'undefined' && errors.username ? 'username-error' : 'username-help' %>"
+                    >
+                    <div id="username-help" class="form-help">
+                        3-20 characters, letters, numbers, underscore, and hyphen only
+                    </div>
+                    <% if (typeof errors !== 'undefined' && errors.username) { %>
+                        <div id="username-error" class="form-error" role="alert">
+                            <span aria-hidden="true">⚠️</span>
+                            <%= errors.username %>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Email Field -->
+                <div class="form-group">
+                    <label for="email" class="form-label form-label--required">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        class="form-input <%= typeof errors !== 'undefined' && errors.email ? 'form-input--error' : '' %>" 
+                        placeholder="Enter your email address"
+                        value="<%= typeof formData !== 'undefined' && formData.email ? formData.email : '' %>"
+                        required
+                        autocomplete="email"
+                        aria-describedby="<%= typeof errors !== 'undefined' && errors.email ? 'email-error' : '' %>"
+                    >
+                    <% if (typeof errors !== 'undefined' && errors.email) { %>
+                        <div id="email-error" class="form-error" role="alert">
+                            <span aria-hidden="true">⚠️</span>
+                            <%= errors.email %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Full Name Field (Optional) -->
+                <div class="form-group">
+                    <label for="fullName" class="form-label">Full Name <span class="form-label--optional">(optional)</span></label>
+                    <input 
+                        type="text" 
+                        id="fullName" 
+                        name="fullName" 
+                        class="form-input" 
+                        placeholder="Your full name"
+                        value="<%= typeof formData !== 'undefined' && formData.fullName ? formData.fullName : '' %>"
+                        autocomplete="name"
+                    >
+                </div>
+                
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label for="password" class="form-label form-label--required">Password</label>
+                    <div class="form-input-group">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input <%= typeof errors !== 'undefined' && errors.password ? 'form-input--error' : '' %>" 
+                            placeholder="Create a strong password"
+                            required
+                            autocomplete="new-password"
+                            minlength="8"
+                            aria-describedby="<%= typeof errors !== 'undefined' && errors.password ? 'password-error' : 'password-help' %>"
+                        >
+                        <button 
+                            type="button" 
+                            class="form-input-addon btn btn--ghost btn--icon btn--sm"
+                            aria-label="Toggle password visibility"
+                            data-toggle-password="password"
+                        >
+                            <span class="password-toggle-icon">👁️</span>
+                        </button>
+                    </div>
+                    <div id="password-help" class="form-help">
+                        At least 8 characters with uppercase, lowercase, and numbers
+                    </div>
+                    <% if (typeof errors !== 'undefined' && errors.password) { %>
+                        <div id="password-error" class="form-error" role="alert">
+                            <span aria-hidden="true">⚠️</span>
+                            <%= errors.password %>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label form-label--required">Confirm Password</label>
+                    <div class="form-input-group">
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            name="confirmPassword" 
+                            class="form-input <%= typeof errors !== 'undefined' && errors.confirmPassword ? 'form-input--error' : '' %>" 
+                            placeholder="Confirm your password"
+                            required
+                            autocomplete="new-password"
+                            aria-describedby="<%= typeof errors !== 'undefined' && errors.confirmPassword ? 'confirm-password-error' : '' %>"
+                        >
+                        <button 
+                            type="button" 
+                            class="form-input-addon btn btn--ghost btn--icon btn--sm"
+                            aria-label="Toggle password visibility"
+                            data-toggle-password="confirmPassword"
+                        >
+                            <span class="password-toggle-icon">👁️</span>
+                        </button>
+                    </div>
+                    <% if (typeof errors !== 'undefined' && errors.confirmPassword) { %>
+                        <div id="confirm-password-error" class="form-error" role="alert">
+                            <span aria-hidden="true">⚠️</span>
+                            <%= errors.confirmPassword %>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Terms Acceptance -->
+                <div class="form-group">
+                    <div class="form-check">
+                        <input 
+                            type="checkbox" 
+                            id="acceptTerms" 
+                            name="acceptTerms" 
+                            class="form-checkbox"
+                            required
+                            <%= typeof formData !== 'undefined' && formData.acceptTerms ? 'checked' : '' %>
+                        >
+                        <label for="acceptTerms" class="form-check-label">
+                            I agree to the <a href="/terms" target="_blank" class="auth-link">Terms of Service</a> 
+                            and <a href="/privacy" target="_blank" class="auth-link">Privacy Policy</a>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn--primary btn--lg btn--block">
+                    <span class="btn-text">Create Account</span>
+                    <span class="btn-spinner loading-spinner loading-spinner--sm" style="display: none;"></span>
+                </button>
+                
+                <!-- General Error Message -->
+                <% if (typeof errors !== 'undefined' && errors.general) { %>
+                    <div class="form-error form-error--general" role="alert">
+                        <span aria-hidden="true">❌</span>
+                        <%= errors.general %>
+                    </div>
+                <% } %>
+            </form>
+        </div>
+        
+        <!-- Auth Footer -->
+        <div class="auth-footer">
+            <p class="auth-footer-text">
+                Already have an account?
+                <a href="/auth/login" class="auth-link auth-link--primary">
+                    Sign in instead
+                </a>
+            </p>
+        </div>
+        
+        <!-- Security Notice -->
+        <div class="auth-security">
+            <div class="security-badge">
+                <span class="security-icon">🔒</span>
+                <div class="security-text">
+                    <strong>Secure Registration</strong>
+                    <p>Your data is encrypted and protected with industry-standard security</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form submission and validation handling
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.auth-form');
+        const submitButton = form.querySelector('button[type="submit"]');
+        const buttonText = submitButton.querySelector('.btn-text');
+        const buttonSpinner = submitButton.querySelector('.btn-spinner');
+        
+        // Password strength indicator
+        const passwordInput = form.querySelector('#password');
+        const confirmPasswordInput = form.querySelector('#confirmPassword');
+        
+        // Form validation
+        function validateForm() {
+            const username = form.querySelector('#username').value.trim();
+            const email = form.querySelector('#email').value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            const acceptTerms = form.querySelector('#acceptTerms').checked;
+            
+            let isValid = true;
+            
+            // Clear previous errors
+            form.querySelectorAll('.form-error').forEach(error => {
+                if (!error.classList.contains('form-error--general')) {
+                    error.remove();
+                }
+            });
+            form.querySelectorAll('.form-input--error').forEach(input => {
+                input.classList.remove('form-input--error');
+            });
+            
+            // Username validation
+            if (!username) {
+                showFieldError('username', 'Username is required');
+                isValid = false;
+            } else if (username.length < 3) {
+                showFieldError('username', 'Username must be at least 3 characters');
+                isValid = false;
+            } else if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+                showFieldError('username', 'Username can only contain letters, numbers, underscore, and hyphen');
+                isValid = false;
+            }
+            
+            // Email validation
+            if (!email) {
+                showFieldError('email', 'Email address is required');
+                isValid = false;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showFieldError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+            
+            // Password validation
+            if (!password) {
+                showFieldError('password', 'Password is required');
+                isValid = false;
+            } else if (password.length < 8) {
+                showFieldError('password', 'Password must be at least 8 characters');
+                isValid = false;
+            } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+                showFieldError('password', 'Password must contain uppercase, lowercase, and numbers');
+                isValid = false;
+            }
+            
+            // Confirm password validation
+            if (!confirmPassword) {
+                showFieldError('confirmPassword', 'Please confirm your password');
+                isValid = false;
+            } else if (password !== confirmPassword) {
+                showFieldError('confirmPassword', 'Passwords do not match');
+                isValid = false;
+            }
+            
+            // Terms acceptance
+            if (!acceptTerms) {
+                showGeneralError('You must accept the Terms of Service and Privacy Policy');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        function showFieldError(fieldName, message) {
+            const field = form.querySelector(`#${fieldName}`);
+            const formGroup = field.closest('.form-group');
+            
+            field.classList.add('form-input--error');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'form-error';
+            errorDiv.setAttribute('role', 'alert');
+            errorDiv.innerHTML = `<span aria-hidden="true">⚠️</span> ${message}`;
+            
+            formGroup.appendChild(errorDiv);
+        }
+        
+        function showGeneralError(message) {
+            let errorContainer = form.querySelector('.form-error--general');
+            if (!errorContainer) {
+                errorContainer = document.createElement('div');
+                errorContainer.className = 'form-error form-error--general';
+                errorContainer.setAttribute('role', 'alert');
+                form.appendChild(errorContainer);
+            }
+            errorContainer.innerHTML = `<span aria-hidden="true">❌</span> ${message}`;
+        }
+        
+        // Real-time password confirmation check
+        confirmPasswordInput.addEventListener('input', function() {
+            const password = passwordInput.value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                this.classList.add('form-input--error');
+            } else {
+                this.classList.remove('form-input--error');
+                const existingError = this.closest('.form-group').querySelector('.form-error');
+                if (existingError) existingError.remove();
+            }
+        });
+        
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            // Show loading state
+            submitButton.disabled = true;
+            buttonText.textContent = 'Creating Account...';
+            buttonSpinner.style.display = 'inline-block';
+            
+            // Submit form
+            const formData = new FormData(form);
+            
+            fetch('/api/auth/register', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Registration successful - redirect to login or dashboard
+                    window.location.href = data.redirect || '/auth/login?registered=true';
+                } else {
+                    throw new Error(data.error?.message || 'Registration failed');
+                }
+            })
+            .catch(error => {
+                console.error('Registration error:', error);
+                showGeneralError(error.message);
+                
+                // Reset button state
+                submitButton.disabled = false;
+                buttonText.textContent = 'Create Account';
+                buttonSpinner.style.display = 'none';
+            });
+        });
+        
+        // Password toggle functionality
+        const passwordToggles = document.querySelectorAll('[data-toggle-password]');
+        passwordToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-toggle-password');
+                const passwordInput = document.querySelector(`#${targetId}`);
+                const icon = this.querySelector('.password-toggle-icon');
+                
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    icon.textContent = '🙈';
+                    this.setAttribute('aria-label', 'Hide password');
+                } else {
+                    passwordInput.type = 'password';
+                    icon.textContent = '👁️';
+                    this.setAttribute('aria-label', 'Show password');
+                }
+            });
+        });
+    });
+</script>

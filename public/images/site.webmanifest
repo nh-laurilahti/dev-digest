@@ -1,0 +1,10 @@
+{
+  "name": "Daily Dev Digest",
+  "short_name": "Dev Digest",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#f59e0b",
+  "description": "Generate personalized developer newsletters from GitHub repository activity."
+} 

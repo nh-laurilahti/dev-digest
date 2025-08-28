@@ -1,0 +1,70 @@
+<%# 
+  Repository Options Partial - Returns complete repository selection container
+  Props:
+  - repositories: array - Array of repository objects
+%>
+
+<% 
+  const repositories = locals.repositories || [];
+%>
+
+<select 
+    id="repositories" 
+    name="repositories" 
+    class="form-select form-select--enhanced"
+    multiple
+    required
+    aria-describedby="repositories-help">
+    <% if (repositories.length > 0) { %>
+        <% repositories.forEach(repo => { %>
+            <option value="<%= repo.id %>" title="<%= repo.description || '' %>">
+                <%= repo.path || `${repo.owner}/${repo.name}` %>
+            </option>
+        <% }) %>
+    <% } else { %>
+        <option value="" disabled>
+            No repositories found - Add some repositories
+        </option>
+    <% } %>
+</select>
+<div class="form-select-controls">
+    <% if (repositories.length > 0) { %>
+        <button type="button" class="btn btn--outline btn--sm select-all-btn">
+            Select All
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm clear-all-btn">
+            Clear All
+        </button>
+    <% } else { %>
+        <a href="/repositories" class="btn btn--primary btn--sm">
+            Add Repositories
+        </a>
+    <% } %>
+</div>
+
+<script>
+    // Initialize repository selector controls
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllBtn = document.querySelector('.select-all-btn');
+        const clearAllBtn = document.querySelector('.clear-all-btn');
+        const repositoriesSelect = document.getElementById('repositories');
+        
+        if (selectAllBtn && repositoriesSelect) {
+            selectAllBtn.addEventListener('click', function() {
+                for (let option of repositoriesSelect.options) {
+                    if (!option.disabled) {
+                        option.selected = true;
+                    }
+                }
+            });
+        }
+        
+        if (clearAllBtn && repositoriesSelect) {
+            clearAllBtn.addEventListener('click', function() {
+                for (let option of repositoriesSelect.options) {
+                    option.selected = false;
+                }
+            });
+        }
+    });
+</script>

@@ -1,0 +1,239 @@
+<!-- Settings Header -->
+<section class="settings-header">
+    <div class="container">
+        <div class="settings-header-content">
+            <div class="settings-title-section">
+                <h1 class="settings-title">Settings</h1>
+                <p class="settings-subtitle">
+                    Manage your account, notifications, and repository preferences
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Settings Content -->
+<section class="settings-content">
+    <div class="container">
+        
+        <!-- Notifications Tab -->
+        <div id="notifications-tab" class="settings-panel settings-panel--active" role="tabpanel">
+            <div class="panel-header">
+                <h2 class="panel-title">Notification Settings</h2>
+                <p class="panel-description">
+                    Configure how and when you want to receive digest notifications
+                </p>
+            </div>
+            
+            <div class="settings-grid">
+                <!-- Email Notifications -->
+                <div class="glass-container">
+                    <div class="setting-section">
+                        <div class="setting-header">
+                            <div class="setting-icon">📧</div>
+                            <div class="setting-info">
+                                <h3 class="setting-title">Email Notifications</h3>
+                                <p class="setting-description">Receive digest summaries via email</p>
+                            </div>
+                            <div class="setting-toggle">
+                                <input type="checkbox" id="emailEnabled" class="toggle-checkbox">
+                                <label for="emailEnabled" class="toggle-label">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="emailConfig" class="setting-config" style="display: none;">
+                            <div class="form-group">
+                                <label for="emailAddress" class="form-label">Email Address</label>
+                                <input type="email" id="emailAddress" class="form-input" placeholder="your@email.com" required>
+                                <div class="form-help">Email address where digest notifications will be sent</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="emailFrequency" class="form-label">Notification Frequency</label>
+                                <select id="emailFrequency" class="form-select form-select--enhanced">
+                                    <option value="immediate">Immediately after generation</option>
+                                    <option value="daily">Daily summary</option>
+                                    <option value="weekly">Weekly summary</option>
+                                </select>
+                                <div class="form-help">How often you want to receive email notifications</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="emailFormat" class="form-label">Email Format</label>
+                                <select id="emailFormat" class="form-select form-select--enhanced">
+                                    <option value="html">HTML (Rich formatting)</option>
+                                    <option value="text">Plain Text</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <button type="button" class="btn btn--ghost btn--sm" id="testEmail">
+                                    <span class="btn-icon">📧</span>
+                                    Send Test Email
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slack Notifications -->
+                <div class="glass-container">
+                    <div class="setting-section">
+                        <div class="setting-header">
+                            <div class="setting-icon">💬</div>
+                            <div class="setting-info">
+                                <h3 class="setting-title">Slack Integration</h3>
+                                <p class="setting-description">Send digests to Slack channels or DMs</p>
+                                <div class="form-help" style="margin-top: 8px;">
+                                    <span id="slackStatus" style="color: #e11d48;">⚠️ Not configured - Click "Setup Instructions" to get started</span>
+                                </div>
+                            </div>
+                            <div class="setting-toggle">
+                                <input type="checkbox" id="slackEnabled" class="toggle-checkbox">
+                                <label for="slackEnabled" class="toggle-label">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="slackConfig" class="setting-config" style="display: none;">
+                            <div class="form-group">
+                                <label for="slackChannel" class="form-label">Default Channel</label>
+                                <input type="text" id="slackChannel" class="form-input" placeholder="#general">
+                                <div class="form-help">Channel name (e.g., #general) or user ID for direct messages</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="slackUsername" class="form-label">Bot Username (Optional)</label>
+                                <input type="text" id="slackUsername" class="form-input" placeholder="digest-bot">
+                                <div class="form-help">Custom username for the bot when posting messages</div>
+                            </div>
+                            <div class="form-row">
+                                <button type="button" class="btn btn--ghost btn--sm" id="testSlack">
+                                    <span class="btn-icon">💬</span>
+                                    Send Test Message
+                                </button>
+                                <button type="button" class="btn btn--outline btn--sm" id="connectSlack">
+                                    <span class="btn-icon">⚙️</span>
+                                    Setup Instructions
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teams Notifications -->
+                <div class="glass-container glass-container--disabled">
+                    <div class="setting-section setting-section--disabled">
+                        <div class="setting-header">
+                            <div class="setting-icon">🤝</div>
+                            <div class="setting-info">
+                                <h3 class="setting-title">Microsoft Teams</h3>
+                                <p class="setting-description">Post digests to Teams channels</p>
+                                <div class="setting-status">
+                                    <span class="status-badge status-badge--coming-soon">Coming soon</span>
+                                </div>
+                            </div>
+                            <div class="setting-toggle">
+                                <input type="checkbox" id="teamsEnabled" class="toggle-checkbox" disabled>
+                                <label for="teamsEnabled" class="toggle-label toggle-label--disabled">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="teamsConfig" class="setting-config" style="display: none;">
+                            <div class="form-group">
+                                <label for="teamsWebhook" class="form-label">Incoming Webhook URL</label>
+                                <input type="url" id="teamsWebhook" class="form-input" placeholder="https://outlook.office.com/webhook/..." required>
+                                <div class="form-help">Get this URL from your Teams channel settings → Connectors → Incoming Webhook</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="teamsTitle" class="form-label">Message Title Template (Optional)</label>
+                                <input type="text" id="teamsTitle" class="form-input" placeholder="New Dev Digest: {repo}">
+                                <div class="form-help">Custom title for Teams messages. Use {repo} for repository name</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="teamsColor" class="form-label">Message Theme Color</label>
+                                <select id="teamsColor" class="form-select form-select--enhanced">
+                                    <option value="0078d4">Blue (Default)</option>
+                                    <option value="10b981">Green</option>
+                                    <option value="f59e0b">Orange</option>
+                                    <option value="ef4444">Red</option>
+                                    <option value="8b5cf6">Purple</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <button type="button" class="btn btn--ghost btn--sm" id="testTeams">
+                                    <span class="btn-icon">🤝</span>
+                                    Send Test Message
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Webhook Notifications -->
+                <div class="glass-container glass-container--disabled">
+                    <div class="setting-section setting-section--disabled">
+                        <div class="setting-header">
+                            <div class="setting-icon">🔗</div>
+                            <div class="setting-info">
+                                <h3 class="setting-title">Webhook Notifications</h3>
+                                <p class="setting-description">Custom HTTP endpoints for digest events</p>
+                                <div class="setting-status">
+                                    <span class="status-badge status-badge--coming-soon">Coming soon</span>
+                                </div>
+                            </div>
+                            <div class="setting-toggle">
+                                <input type="checkbox" id="webhookEnabled" class="toggle-checkbox" disabled>
+                                <label for="webhookEnabled" class="toggle-label toggle-label--disabled">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="webhookConfig" class="setting-config" style="display: none;">
+                            <div class="form-group">
+                                <label for="webhookUrl" class="form-label">Webhook URL</label>
+                                <input type="url" id="webhookUrl" class="form-input" placeholder="https://your-api.com/webhook" required>
+                                <div class="form-help">HTTP endpoint that will receive POST requests with digest data</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="webhookSecret" class="form-label">Secret Key (Optional)</label>
+                                <input type="password" id="webhookSecret" class="form-input" placeholder="Your secret key">
+                                <div class="form-help">Used to sign webhook requests for security verification</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="webhookMethod" class="form-label">HTTP Method</label>
+                                <select id="webhookMethod" class="form-select form-select--enhanced">
+                                    <option value="POST">POST (Recommended)</option>
+                                    <option value="PUT">PUT</option>
+                                    <option value="PATCH">PATCH</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="webhookHeaders" class="form-label">Custom Headers (Optional)</label>
+                                <textarea id="webhookHeaders" class="form-textarea form-textarea--enhanced" rows="3" placeholder="Content-Type: application/json&#10;Authorization: Bearer your-token"></textarea>
+                                <div class="form-help">One header per line in "Key: Value" format</div>
+                            </div>
+                            <div class="form-row">
+                                <button type="button" class="btn btn--ghost btn--sm" id="testWebhook">
+                                    <span class="btn-icon">🔗</span>
+                                    Test Webhook
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-actions">
+                <button type="button" class="btn btn--primary" id="saveNotifications">
+                    Save Notification Settings
+                </button>
+            </div>
+        </div>
+
+    </div>
+</section>
+

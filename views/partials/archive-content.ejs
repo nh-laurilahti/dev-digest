@@ -1,0 +1,156 @@
+<!-- Archive Header -->
+<section class="archive-header">
+    <div class="container">
+        <div class="archive-header-content">
+            <div class="archive-title-section">
+                <h1 class="archive-title">Digest Archive</h1>
+                <p class="archive-subtitle">
+                    Browse, search, and manage all your generated digests
+                </p>
+            </div>
+            <div class="archive-actions">
+                <a href="/dashboard" class="btn btn--primary">
+                    Generate New Digest
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Search and Filter Controls -->
+<section class="archive-controls">
+    <div class="container">
+        <div class="glass-container">
+            <div class="controls-grid">
+                <!-- Search Input -->
+                <div class="control-group">
+                    <label for="searchInput" class="control-label">Search Digests</label>
+                    <div class="search-input-wrapper">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            class="form-input search-input"
+                            placeholder="Search by title, repository, or content..."
+                            aria-describedby="search-help"
+                        >
+                        <button type="button" class="search-clear" id="clearSearch" style="display: none;">
+                            ✕
+                        </button>
+                    </div>
+                    <div id="search-help" class="form-help">
+                        Search through digest titles, repositories, and content
+                    </div>
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="control-group">
+                    <label for="statusFilter" class="control-label">Status</label>
+                    <select id="statusFilter" class="form-select form-select--enhanced">
+                        <option value="">All Statuses</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="RUNNING">Running</option>
+                        <option value="FAILED">Failed</option>
+                    </select>
+                </div>
+                
+                <!-- Date Range Filter -->
+                <div class="control-group">
+                    <label for="dateFilter" class="control-label">Date Range</label>
+                    <select id="dateFilter" class="form-select form-select--enhanced">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="quarter">Last 3 Months</option>
+                        <option value="year">This Year</option>
+                    </select>
+                </div>
+                
+                <!-- Sort Options -->
+                <div class="control-group">
+                    <label for="sortBy" class="control-label">Sort By</label>
+                    <select id="sortBy" class="form-select form-select--enhanced">
+                        <option value="createdAt:desc">Newest First</option>
+                        <option value="createdAt:asc">Oldest First</option>
+                        <option value="title:asc">Title A-Z</option>
+                        <option value="title:desc">Title Z-A</option>
+                        <option value="status:asc">Status</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="controls-actions">
+                <button type="button" id="applyFilters" class="btn btn--primary btn--sm">
+                    Apply Filters
+                </button>
+                <button type="button" id="clearFilters" class="btn btn--ghost btn--sm">
+                    Clear All
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Digests Grid -->
+<section class="archive-content">
+    <div class="container">
+        <!-- Results Summary -->
+        <div class="results-summary">
+            <div class="results-info">
+                <span id="resultsCount">Loading...</span>
+                <span id="activeFilters" class="active-filters"></span>
+            </div>
+            <div class="view-options">
+                <button type="button" class="view-toggle view-toggle--active" data-view="grid" aria-label="Grid view">
+                    ⊞
+                </button>
+                <button type="button" class="view-toggle" data-view="list" aria-label="List view">
+                    ☰
+                </button>
+            </div>
+        </div>
+        
+        <!-- Digests Container -->
+        <div id="digestsContainer" class="digests-container view-grid">
+            <!-- Loading State -->
+            <div class="digests-loading">
+                <div class="loading-spinner"></div>
+                <p>Loading digests...</p>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div id="pagination" class="pagination" style="display: none;">
+            <!-- Pagination will be generated here -->
+        </div>
+    </div>
+</section>
+
+<!-- Digest Actions Modal -->
+<div id="digestModal" class="modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 class="modal-title">Digest Actions</h3>
+            <button type="button" class="modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-actions">
+                <button type="button" class="btn btn--ghost btn--block modal-action" data-action="view">
+                    View Digest
+                </button>
+                <button type="button" class="btn btn--ghost btn--block modal-action" data-action="download">
+                    Download
+                </button>
+                <button type="button" class="btn btn--ghost btn--block modal-action" data-action="regenerate">
+                    Regenerate
+                </button>
+                <div class="modal-divider"></div>
+                <button type="button" class="btn btn--danger btn--block modal-action" data-action="delete">
+                    Delete Digest
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

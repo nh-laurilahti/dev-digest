@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- SEO Meta Tags -->
+    <title><%= typeof title !== 'undefined' ? title + ' - Daily Dev Digest' : 'Daily Dev Digest - Personalized Developer Newsletter' %></title>
+    <meta name="description" content="<%= typeof description !== 'undefined' ? description : 'Generate personalized developer newsletters from GitHub repository activity. Stay updated with the latest PRs and changes in your projects.' %>">
+    <meta name="keywords" content="developer, newsletter, github, pull requests, digest, development">
+    <meta name="author" content="Daily Dev Digest">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= typeof url !== 'undefined' ? url : 'https://dailydevdigest.com' %>">
+    <meta property="og:title" content="<%= typeof title !== 'undefined' ? title + ' - Daily Dev Digest' : 'Daily Dev Digest - Personalized Developer Newsletter' %>">
+    <meta property="og:description" content="<%= typeof description !== 'undefined' ? description : 'Generate personalized developer newsletters from GitHub repository activity.' %>">
+    <meta property="og:image" content="https://dailydevdigest.com/static/images/og-image.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="<%= typeof url !== 'undefined' ? url : 'https://dailydevdigest.com' %>">
+    <meta property="twitter:title" content="<%= typeof title !== 'undefined' ? title + ' - Daily Dev Digest' : 'Daily Dev Digest - Personalized Developer Newsletter' %>">
+    <meta property="twitter:description" content="<%= typeof description !== 'undefined' ? description : 'Generate personalized developer newsletters from GitHub repository activity.' %>">
+    <meta property="twitter:image" content="https://dailydevdigest.com/static/images/twitter-image.png">
+    
+    <!-- Preload critical fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/design-system.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="/static/images/site.webmanifest">
+    <link rel="mask-icon" href="/static/images/favicon.svg" color="#f59e0b">
+    
+    <!-- CSRF token -->
+    <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
+    
+    <!-- Theme color for mobile browsers -->
+    <meta name="theme-color" content="#f59e0b">
+    
+    <% if (typeof additionalHead !== 'undefined') { %>
+        <%- additionalHead %>
+    <% } %>
+</head>
+<body class="<%= typeof bodyClass !== 'undefined' ? bodyClass : '' %>">
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Navigation -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="navbar-container">
+            <!-- Brand/Logo -->
+            <div class="navbar-brand">
+                <a href="/dashboard" class="navbar-logo">
+                    <span class="sr-only">Daily Dev Digest</span>
+                    <!-- Logo SVG or text can go here -->
+                    <div class="navbar-logo-text">
+                        <span class="brand-icon">📊</span>
+                        <span class="brand-text">Daily Dev Digest</span>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- Mobile menu button -->
+            <button class="navbar-toggle" aria-label="Toggle navigation" aria-expanded="false" data-target="#main-menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            
+            <!-- Navigation Menu -->
+            <div class="navbar-menu" id="main-menu">
+                <!-- Main Navigation -->
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a href="/dashboard" class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'dashboard' ? 'nav-link--active' : '' %>">
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/archive" class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'archive' ? 'nav-link--active' : '' %>">
+                            Archive
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/repositories" class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'repositories' ? 'nav-link--active' : '' %>">
+                            Repositories
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/settings" class="nav-link <%= typeof currentPage !== 'undefined' && currentPage === 'settings' ? 'nav-link--active' : '' %>">
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+        <!-- Flash Messages -->
+        <% if (typeof flash !== 'undefined' && flash) { %>
+            <div class="flash-messages">
+                <% if (flash.success) { %>
+                    <% flash.success.forEach(function(message) { %>
+                        <div class="alert alert--success alert--dismissible">
+                            <span class="alert-icon">✅</span>
+                            <span class="alert-message"><%= message %></span>
+                            <button type="button" class="alert-close" aria-label="Close">×</button>
+                        </div>
+                    <% }); %>
+                <% } %>
+                <% if (flash.error) { %>
+                    <% flash.error.forEach(function(message) { %>
+                        <div class="alert alert--error alert--dismissible">
+                            <span class="alert-icon">❌</span>
+                            <span class="alert-message"><%= message %></span>
+                            <button type="button" class="alert-close" aria-label="Close">×</button>
+                        </div>
+                    <% }); %>
+                <% } %>
+                <% if (flash.warning) { %>
+                    <% flash.warning.forEach(function(message) { %>
+                        <div class="alert alert--warning alert--dismissible">
+                            <span class="alert-icon">⚠️</span>
+                            <span class="alert-message"><%= message %></span>
+                            <button type="button" class="alert-close" aria-label="Close">×</button>
+                        </div>
+                    <% }); %>
+                <% } %>
+                <% if (flash.info) { %>
+                    <% flash.info.forEach(function(message) { %>
+                        <div class="alert alert--info alert--dismissible">
+                            <span class="alert-icon">ℹ️</span>
+                            <span class="alert-message"><%= message %></span>
+                            <button type="button" class="alert-close" aria-label="Close">×</button>
+                        </div>
+                    <% }); %>
+                <% } %>
+            </div>
+        <% } %>
+        
+        <!-- Page Content -->
+        <%- body %>
+    </main>
+    
+    
+    <!-- JavaScript -->
+    <!-- HTMX Library -->
+    <script src="/static/js/htmx.min.js"></script>
+    
+    <!-- Main Application Script -->
+    <script src="/static/js/main.js"></script>
+    
+    <script>
+        // CSRF token for AJAX requests
+        window.csrfToken = '<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>';
+        
+        
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.querySelector('.navbar-toggle');
+            const menu = document.querySelector('.navbar-menu');
+            
+            if (toggleButton && menu) {
+                toggleButton.addEventListener('click', function() {
+                    const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+                    toggleButton.setAttribute('aria-expanded', !isExpanded);
+                    menu.classList.toggle('navbar-menu--open', !isExpanded);
+                });
+            }
+            
+            // Dropdown menus
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdown = this.closest('.dropdown');
+                    const menu = dropdown.querySelector('.dropdown-menu');
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    
+                    // Close other dropdowns
+                    document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+                        if (otherMenu !== menu) {
+                            otherMenu.classList.remove('dropdown-menu--open');
+                            otherMenu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    menu.classList.toggle('dropdown-menu--open', !isExpanded);
+                });
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('dropdown-menu--open');
+                        menu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+            
+            // Flash message dismiss
+            const alertCloses = document.querySelectorAll('.alert-close');
+            alertCloses.forEach(closeBtn => {
+                closeBtn.addEventListener('click', function() {
+                    this.closest('.alert').remove();
+                });
+            });
+            
+            // Auto-dismiss flash messages after 5 seconds
+            const alerts = document.querySelectorAll('.alert--success, .alert--info');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 300);
+                }, 5000);
+            });
+        });
+    </script>
+    
+    <% if (typeof additionalScripts !== 'undefined') { %>
+        <%- additionalScripts %>
+    <% } %>
+    
+    <!-- Page-specific scripts -->
+    <% if (typeof pageScripts !== 'undefined') { %>
+        <script>
+            <%- pageScripts %>
+        </script>
+    <% } %>
+</body>
+</html>

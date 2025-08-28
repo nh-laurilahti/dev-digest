@@ -1,0 +1,518 @@
+<% const title = 'Archive' %>
+<% const description = 'Browse and manage all your generated developer newsletters and digests.' %>
+<% const bodyClass = 'archive-page' %>
+
+<%- include('layouts/base', {
+    title,
+    description,
+    bodyClass,
+    currentPage: 'archive',
+    body: include('partials/archive-content'),
+    additionalScripts: `
+        <script>
+        // Archive state
+        let currentPage = 1;
+        let currentFilters = {};
+        let currentSort = 'createdAt:desc';
+        let currentView = 'grid';
+        let selectedDigest = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initArchive();
+        });
+        
+        function initArchive() {
+            loadDigests();
+            initControls();
+            initModal();
+            initViewToggle();
+            initDropdowns();
+        }
+        
+        // Load digests with current filters
+        async function loadDigests() {
+            try {
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    limit: 12,
+                    sort: currentSort,
+                    ...currentFilters
+                });
+                
+                const response = await fetch(\`/api/v1/digests?\${params}\`, {
+                    headers: {
+                        'Authorization': \`Bearer \${localStorage.getItem('accessToken') || ''}\`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load digests');
+                
+                const data = await response.json();
+                renderDigests(data.data.digests || []);
+                renderPagination(data.data.pagination || {});
+                updateResultsCount(data.data.pagination?.total || 0);
+                
+            } catch (error) {
+                console.error('Failed to load digests:', error);
+                renderError('Failed to load digests. Please try again.');
+            }
+        }
+        
+        // Render digests grid/list
+        function renderDigests(digests) {
+            const container = document.getElementById('digestsContainer');
+            
+            if (digests.length === 0) {
+                container.innerHTML = \`
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <h3 class="empty-state-title">No digests found</h3>
+                        <p class="empty-state-description">
+                            \${Object.keys(currentFilters).length > 0 
+                                ? 'Try adjusting your filters or search terms' 
+                                : 'Generate your first digest to get started'}
+                        </p>
+                        <a href="/dashboard" class="btn btn--primary">Generate Digest</a>
+                    </div>
+                \`;
+                return;
+            }
+            
+            container.className = \`digests-container view-\${currentView}\`;
+            container.innerHTML = digests.map(digest => {
+                const createdDate = new Date(digest.createdAt).toLocaleDateString();
+                const createdTime = new Date(digest.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const repository = digest.repo;
+                const lastJob = digest.lastJob;
+                const statusClass = lastJob?.status?.toLowerCase() || 'unknown';
+                const stats = digest.stats || {};
+                
+                return \`
+                    <div class="digest-card" data-digest-id="\${digest.id}">
+                        <div class="digest-card-header">
+                            <h3 class="digest-card-title">
+                                \${repository ? \`Digest for \${repository.name}\` : 'Untitled Digest'}
+                            </h3>
+                            <span class="digest-card-status status-\${statusClass}">
+                                \${lastJob?.status || 'Unknown'}
+                            </span>
+                        </div>
+                        
+                        <div class="digest-card-meta">
+                            <span class="digest-card-date">Created \${createdDate}</span>
+                            \${repository ? \`
+                                <span class="digest-card-repos">Repository \${repository.name || repository.path}</span>
+                            \` : ''}
+                            \${stats.totalPRs ? \`
+                                <span class="digest-card-prs">Pull Requests \${stats.totalPRs}</span>
+                            \` : ''}
+                        </div>
+                        
+                        \${repository ? \`
+                            <div class="digest-card-repos">
+                                <span class="repo-tag">\${repository.name}</span>
+                                \${repository.description ? \`<span class="repo-description">\${repository.description.substring(0, 60)}\${repository.description.length > 60 ? '...' : ''}</span>\` : ''}
+                            </div>
+                        \` : ''}
+                        
+                        <div class="digest-card-actions">
+                            <div class="digest-actions-links">
+                                <a href="#" data-action="view" data-digest-id="\${digest.id}">View</a>
+                                <a href="#" data-action="regenerate" data-digest-id="\${digest.id}">Regenerate</a>
+                                <a href="#" data-action="delete" data-digest-id="\${digest.id}" style="color: #ef4444;">Delete</a>
+                            </div>
+                        </div>
+                    </div>
+                \`;
+            }).join('');
+        }
+        
+        // Render pagination
+        function renderPagination(pagination) {
+            const container = document.getElementById('pagination');
+            
+            if (!pagination || pagination.totalPages <= 1) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'flex';
+            const { page: current, totalPages, hasNext, hasPrev } = pagination;
+            
+            let paginationHTML = '';
+            
+            // Previous button
+            if (hasPrev) {
+                paginationHTML += \`<button class="pagination-btn" data-page="\${current - 1}">← Previous</button>\`;
+            }
+            
+            // Page numbers
+            const startPage = Math.max(1, current - 2);
+            const endPage = Math.min(totalPages, current + 2);
+            
+            if (startPage > 1) {
+                paginationHTML += \`<button class="pagination-btn" data-page="1">1</button>\`;
+                if (startPage > 2) {
+                    paginationHTML += \`<span class="pagination-ellipsis">…</span>\`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += \`
+                    <button class="pagination-btn \${i === current ? 'pagination-btn--active' : ''}" data-page="\${i}">
+                        \${i}
+                    </button>
+                \`;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += \`<span class="pagination-ellipsis">…</span>\`;
+                }
+                paginationHTML += \`<button class="pagination-btn" data-page="\${totalPages}">\${totalPages}</button>\`;
+            }
+            
+            // Next button
+            if (hasNext) {
+                paginationHTML += \`<button class="pagination-btn" data-page="\${current + 1}">Next →</button>\`;
+            }
+            
+            container.innerHTML = paginationHTML;
+        }
+        
+        // Update results count
+        function updateResultsCount(total) {
+            const countElement = document.getElementById('resultsCount');
+            const filtersElement = document.getElementById('activeFilters');
+            
+            countElement.textContent = \`\${total} digest\${total !== 1 ? 's' : ''} found\`;
+            
+            // Show active filters
+            const activeFilters = Object.keys(currentFilters).filter(key => currentFilters[key]);
+            if (activeFilters.length > 0) {
+                filtersElement.innerHTML = activeFilters.map(key => {
+                    const value = currentFilters[key];
+                    return \`<span class="filter-tag">\${key}: \${value}</span>\`;
+                }).join('');
+                filtersElement.style.display = 'block';
+            } else {
+                filtersElement.style.display = 'none';
+            }
+        }
+        
+        // Render error state
+        function renderError(message) {
+            const container = document.getElementById('digestsContainer');
+            container.innerHTML = \`
+                <div class="error-state">
+                    <div class="error-state-icon">❌</div>
+                    <h3 class="error-state-title">Error</h3>
+                    <p class="error-state-description">\${message}</p>
+                    <button type="button" class="btn btn--primary" onclick="loadDigests()">
+                        Try Again
+                    </button>
+                </div>
+            \`;
+        }
+        
+        // Initialize controls
+        function initControls() {
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
+            const applyFilters = document.getElementById('applyFilters');
+            const clearFilters = document.getElementById('clearFilters');
+            
+            // Search functionality
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const value = this.value.trim();
+                
+                if (value) {
+                    clearSearch.style.display = 'block';
+                } else {
+                    clearSearch.style.display = 'none';
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    currentFilters.search = value || undefined;
+                    currentPage = 1;
+                    loadDigests();
+                }, 500);
+            });
+            
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                this.style.display = 'none';
+                delete currentFilters.search;
+                currentPage = 1;
+                loadDigests();
+            });
+            
+            // Apply filters
+            applyFilters.addEventListener('click', function() {
+                const statusFilter = document.getElementById('statusFilter').value;
+                const dateFilter = document.getElementById('dateFilter').value;
+                const sortBy = document.getElementById('sortBy').value;
+                
+                currentFilters.status = statusFilter || undefined;
+                currentFilters.dateRange = dateFilter || undefined;
+                currentSort = sortBy;
+                currentPage = 1;
+                
+                loadDigests();
+            });
+            
+            // Clear all filters
+            clearFilters.addEventListener('click', function() {
+                searchInput.value = '';
+                clearSearch.style.display = 'none';
+                document.getElementById('statusFilter').value = '';
+                document.getElementById('dateFilter').value = '';
+                document.getElementById('sortBy').value = 'createdAt:desc';
+                
+                currentFilters = {};
+                currentSort = 'createdAt:desc';
+                currentPage = 1;
+                
+                loadDigests();
+            });
+            
+            // Pagination
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('.pagination-btn[data-page]')) {
+                    currentPage = parseInt(e.target.dataset.page);
+                    loadDigests();
+                }
+            });
+            
+            // Digest actions
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('[data-action="view"]')) {
+                    const digestId = e.target.dataset.digestId;
+                    window.location.href = \`/digests/\${digestId}\`;
+                }
+                
+                if (e.target.matches('[data-action="regenerate"]')) {
+                    const digestId = e.target.dataset.digestId;
+                    handleDigestAction('regenerate', digestId);
+                }
+                
+                if (e.target.matches('[data-action="delete"]')) {
+                    const digestId = e.target.dataset.digestId;
+                    handleDigestAction('delete', digestId);
+                }
+            });
+        }
+        
+        // Initialize modal
+        function initModal() {
+            const modal = document.getElementById('digestModal');
+            const closeBtn = modal.querySelector('.modal-close');
+            const overlay = modal.querySelector('.modal-overlay');
+            
+            closeBtn.addEventListener('click', hideModal);
+            overlay.addEventListener('click', hideModal);
+            
+            // Modal actions
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('.modal-action')) {
+                    const action = e.target.dataset.action;
+                    handleDigestAction(action, selectedDigest);
+                    hideModal();
+                }
+            });
+        }
+        
+        function showModal() {
+            document.getElementById('digestModal').style.display = 'block';
+        }
+        
+        function hideModal() {
+            document.getElementById('digestModal').style.display = 'none';
+            selectedDigest = null;
+        }
+        
+        // Handle digest actions
+        async function handleDigestAction(action, digestId) {
+            switch (action) {
+                case 'view':
+                    window.location.href = \`/digests/\${digestId}\`;
+                    break;
+                    
+                case 'download':
+                    window.open(\`/api/v1/digests/\${digestId}/export?format=pdf\`, '_blank');
+                    break;
+                    
+                case 'regenerate':
+                    if (confirm('Are you sure you want to regenerate this digest? This will create a new version.')) {
+                        try {
+                            const response = await fetch(\`/api/v1/digests/\${digestId}/regenerate\`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': \`Bearer \${localStorage.getItem('accessToken') || ''}\`,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.data.jobId) {
+                                    window.location.href = \`/api/jobs/\${data.data.jobId}\`;
+                                }
+                            } else {
+                                throw new Error('Failed to regenerate digest');
+                            }
+                        } catch (error) {
+                            console.error('Failed to regenerate digest:', error);
+                            alert('Failed to regenerate digest. Please try again.');
+                        }
+                    }
+                    break;
+                    
+                case 'delete':
+                    if (confirm('Are you sure you want to delete this digest? This action cannot be undone.')) {
+                        try {
+                            const response = await fetch(\`/api/v1/digests/\${digestId}\`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': \`Bearer \${localStorage.getItem('accessToken') || ''}\`
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                loadDigests(); // Reload the list
+                            } else {
+                                throw new Error('Failed to delete digest');
+                            }
+                        } catch (error) {
+                            console.error('Failed to delete digest:', error);
+                            alert('Failed to delete digest. Please try again.');
+                        }
+                    }
+                    break;
+            }
+        }
+        
+        // Initialize view toggle
+        function initViewToggle() {
+            const viewToggles = document.querySelectorAll('.view-toggle');
+            
+            viewToggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const view = this.dataset.view;
+                    
+                    viewToggles.forEach(t => t.classList.remove('view-toggle--active'));
+                    this.classList.add('view-toggle--active');
+                    
+                    currentView = view;
+                    
+                    const container = document.getElementById('digestsContainer');
+                    container.className = \`digests-container view-\${view}\`;
+                });
+            });
+        }
+        
+        // Initialize dropdown functionality
+        function initDropdowns() {
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdown = this.closest('.dropdown');
+                    const menu = dropdown.querySelector('.dropdown-menu');
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    
+                    // Close other dropdowns
+                    document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+                        if (otherMenu !== menu) {
+                            otherMenu.classList.remove('dropdown-menu--open');
+                            otherMenu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    menu.classList.toggle('dropdown-menu--open', !isExpanded);
+                });
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('dropdown-menu--open');
+                        menu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        }
+        </script>
+        
+        <style>
+        /* Archive-specific enhancements */
+        .repo-description {
+            display: block;
+            font-size: var(--font-size-xs);
+            color: var(--color-text-tertiary);
+            margin-top: var(--space-1);
+            font-style: italic;
+        }
+
+        .digest-card-repos {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+            margin-bottom: var(--space-4);
+        }
+
+        .repo-tag {
+            display: inline-block;
+            padding: var(--space-1) var(--space-2);
+            background-color: rgba(89, 89, 230, 0.1);
+            color: var(--color-brand-bg);
+            border: 1px solid rgba(89, 89, 230, 0.3);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            align-self: flex-start;
+        }
+
+        /* Status badge improvements */
+        .status-completed {
+            background-color: var(--color-success-bg);
+            color: var(--color-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-pending, .status-running {
+            background-color: var(--color-warning-bg);
+            color: var(--color-warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-failed {
+            background-color: var(--color-error-bg);
+            color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-unknown {
+            background-color: rgba(156, 163, 175, 0.1);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        .digest-card-status {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        </style>
+    `
+}) %>

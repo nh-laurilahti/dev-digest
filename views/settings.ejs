@@ -1,0 +1,427 @@
+<% const title = 'Settings' %>
+<% const description = 'Configure your Daily Dev Digest preferences, notifications, and account settings.' %>
+<% const bodyClass = 'settings-page' %>
+
+<%- include('layouts/base', {
+    title,
+    description,
+    bodyClass,
+    currentPage: 'settings',
+    body: include('partials/settings-content'),
+    additionalScripts: `
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initSettings();
+        });
+        
+        function initSettings() {
+            initToggles();
+            initNotifications();
+            initDropdowns();
+        }
+        
+        
+        // Initialize toggle switches
+        function initToggles() {
+            const toggles = document.querySelectorAll('.toggle-checkbox');
+            
+            toggles.forEach(toggle => {
+                toggle.addEventListener('change', function() {
+                    const configId = this.id.replace('Enabled', 'Config');
+                    const configPanel = document.getElementById(configId);
+                    
+                    if (configPanel) {
+                        configPanel.style.display = this.checked ? 'block' : 'none';
+                    }
+                });
+            });
+        }
+        
+        // Initialize notifications settings
+        function initNotifications() {
+            loadNotificationSettings();
+            checkSlackConfiguration();
+            
+            // Save notifications
+            document.getElementById('saveNotifications').addEventListener('click', saveNotificationSettings);
+            
+            // Test buttons
+            document.getElementById('testEmail')?.addEventListener('click', () => testNotification('email'));
+            document.getElementById('testSlack')?.addEventListener('click', () => testNotification('slack'));
+            document.getElementById('testTeams')?.addEventListener('click', () => testNotification('teams'));
+            document.getElementById('testWebhook')?.addEventListener('click', () => testNotification('webhook'));
+            
+            // Connect Slack
+            document.getElementById('connectSlack')?.addEventListener('click', connectSlack);
+        }
+
+        // Check Slack configuration status
+        async function checkSlackConfiguration() {
+            try {
+                const response = await fetch('/api/v1/notifications/test-slack-simple', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('accessToken') || ''),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        channel: '#test',
+                        message: 'config-check'
+                    })
+                });
+                
+                const result = await response.json();
+                const statusElement = document.getElementById('slackStatus');
+                
+                if (response.ok) {
+                    statusElement.innerHTML = '✅ Configured and ready';
+                    statusElement.style.color = '#059669';
+                } else if (result.error?.code === 'SLACK_NOT_CONFIGURED') {
+                    statusElement.innerHTML = '⚠️ Not configured - Click "Setup Instructions" to get started';
+                    statusElement.style.color = '#e11d48';
+                } else {
+                    statusElement.innerHTML = '⚠️ Configuration error - Check credentials';
+                    statusElement.style.color = '#d97706';
+                }
+            } catch (error) {
+                console.log('Could not check Slack configuration:', error.message);
+                // Keep default status
+            }
+        }
+        
+        async function loadNotificationSettings() {
+            try {
+                const response = await fetch('/api/v1/settings?section=notifications', {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const preferences = data.data?.settings || {};
+                    
+                    // Populate notification settings
+                    const emailEnabled = preferences.emailNotifications?.enabled || false;
+                    const slackEnabled = preferences.slackNotifications?.enabled || false;
+                    const teamsEnabled = false; // Disabled - coming soon
+                    const webhookEnabled = false; // Disabled - coming soon
+                    
+                    document.getElementById('emailEnabled').checked = emailEnabled;
+                    document.getElementById('slackEnabled').checked = slackEnabled;
+                    document.getElementById('teamsEnabled').checked = teamsEnabled;
+                    document.getElementById('webhookEnabled').checked = webhookEnabled;
+                    
+                    // Trigger change events to show/hide configs
+                    document.getElementById('emailEnabled').dispatchEvent(new Event('change'));
+                    document.getElementById('slackEnabled').dispatchEvent(new Event('change'));
+                    // Skip disabled toggles - they stay disabled
+                    // document.getElementById('teamsEnabled').dispatchEvent(new Event('change'));
+                    // document.getElementById('webhookEnabled').dispatchEvent(new Event('change'));
+                    
+                    // Populate specific settings
+                    if (preferences.emailNotifications) {
+                        document.getElementById('emailAddress').value = preferences.emailNotifications.address || '';
+                        document.getElementById('emailFrequency').value = preferences.emailNotifications.frequency || 'immediate';
+                        document.getElementById('emailFormat').value = preferences.emailNotifications.format || 'html';
+                    }
+                    
+                    if (preferences.slackNotifications) {
+                        document.getElementById('slackChannel').value = preferences.slackNotifications.channel || '';
+                        document.getElementById('slackUsername').value = preferences.slackNotifications.username || '';
+                    }
+                    
+                    if (preferences.teamsNotifications) {
+                        document.getElementById('teamsWebhook').value = preferences.teamsNotifications.webhookUrl || '';
+                        document.getElementById('teamsTitle').value = preferences.teamsNotifications.titleTemplate || '';
+                        document.getElementById('teamsColor').value = preferences.teamsNotifications.themeColor || '0078d4';
+                    }
+                    
+                    if (preferences.webhookNotifications) {
+                        document.getElementById('webhookUrl').value = preferences.webhookNotifications.url || '';
+                        document.getElementById('webhookMethod').value = preferences.webhookNotifications.method || 'POST';
+                        document.getElementById('webhookHeaders').value = preferences.webhookNotifications.headers || '';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load notification settings:', error);
+            }
+        }
+        
+        async function saveNotificationSettings() {
+            const button = document.getElementById('saveNotifications');
+            const originalText = button.textContent;
+            
+            button.disabled = true;
+            button.textContent = 'Saving...';
+            
+            try {
+                const preferences = {
+                    emailNotifications: {
+                        enabled: document.getElementById('emailEnabled').checked,
+                        address: document.getElementById('emailAddress').value,
+                        frequency: document.getElementById('emailFrequency').value,
+                        format: document.getElementById('emailFormat').value
+                    },
+                    slackNotifications: {
+                        enabled: document.getElementById('slackEnabled').checked,
+                        channel: document.getElementById('slackChannel').value,
+                        username: document.getElementById('slackUsername').value
+                    },
+                    teamsNotifications: {
+                        enabled: false, // Disabled - coming soon
+                        webhookUrl: '',
+                        titleTemplate: '',
+                        themeColor: '0078d4'
+                    },
+                    webhookNotifications: {
+                        enabled: false, // Disabled - coming soon
+                        url: '',
+                        secret: '',
+                        method: 'POST',
+                        headers: ''
+                    }
+                };
+                
+                const response = await fetch('/api/v1/settings', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        notifications: preferences
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('Notification settings saved successfully', 'success');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Failed to save notification settings:', error);
+                showNotification('Failed to save notification settings', 'error');
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        }
+        
+        async function testNotification(type) {
+            try {
+                let requestBody = {};
+                
+                // Collect type-specific data
+                if (type === 'slack') {
+                    const channel = document.getElementById('slackChannel')?.value || '#general';
+                    const message = 'This is a test message from Daily Dev Digest. Slack integration is working!';
+                    
+                    requestBody = {
+                        channel: channel,
+                        message: message
+                    };
+                    
+                    // Try the simplified endpoint first for immediate feedback
+                    try {
+                        const simpleResponse = await fetch('/api/v1/notifications/test-slack-simple', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Bearer ' + (localStorage.getItem('accessToken') || ''),
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(requestBody)
+                        });
+                        
+                        if (simpleResponse.ok) {
+                            const result = await simpleResponse.json();
+                            showNotification('Test Slack message sent successfully (direct)', 'success');
+                            console.log('Test Slack result (direct):', result);
+                            return; // Exit early if simple test works
+                        } else {
+                            console.log('Simple Slack test failed, trying job-based approach...');
+                        }
+                    } catch (simpleError) {
+                        console.log('Simple Slack test error:', simpleError.message);
+                        console.log('Falling back to job-based Slack test...');
+                    }
+                } else if (type === 'email') {
+                    const to = document.getElementById('emailAddress')?.value || 'test@example.com';
+                    const subject = 'Test Email from Daily Dev Digest';
+                    const message = 'This is a test email to verify your email configuration is working.';
+                    
+                    requestBody = {
+                        to: to,
+                        subject: subject,
+                        message: message,
+                        html: false
+                    };
+                } else if (type === 'teams') {
+                    const webhook_url = document.getElementById('teamsWebhookUrl')?.value;
+                    const title = 'Test Teams Message';
+                    const message = 'This is a test message from Daily Dev Digest. Teams integration is working!';
+                    
+                    requestBody = {
+                        webhook_url: webhook_url,
+                        title: title,
+                        message: message,
+                        theme_color: '0078d4'
+                    };
+                } else if (type === 'webhook') {
+                    const url = document.getElementById('webhookUrl')?.value;
+                    const method = 'POST';
+                    const message = JSON.stringify({ 
+                        test: true, 
+                        message: 'This is a test webhook from Daily Dev Digest',
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    requestBody = {
+                        url: url,
+                        method: method,
+                        message: message
+                    };
+                }
+                
+                const response = await fetch('/api/v1/notifications/test-' + type, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('accessToken') || ''),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showNotification('Test ' + type + ' notification sent successfully', 'success');
+                    console.log('Test ' + type + ' result:', result);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'Failed to send test ' + type + ' notification');
+                }
+            } catch (error) {
+                console.error('Failed to test ' + type + ' notification:', error);
+                showNotification('Failed to send test ' + type + ' notification: ' + error.message, 'error');
+            }
+        }
+        
+        function connectSlack() {
+            // Show instructions for manual Slack configuration
+            const message = '<div style="max-width: 640px; line-height: 1.5; color: #111827;">' +
+                '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px;">' +
+                    '<h3 style="margin:0; font-size: 20px;">Configure Slack Integration</h3>' +
+                    '<a href="https://api.slack.com/apps" target="_blank" style="text-decoration:none; background:#111827; color:#fff; padding:6px 10px; border-radius:6px; font-size: 12px;">api.slack.com/apps</a>' +
+                '</div>' +
+                '<p style="margin:12px 0 8px;">Add these to your <code>.env</code> file:</p>' +
+                '<div style="position:relative; margin:8px 0 16px;">' +
+                    '<div style="position:absolute; top:8px; left:8px; background:#EEF2FF; color:#3730A3; border:1px solid #C7D2FE; font-size:11px; padding:2px 6px; border-radius:9999px;">.env</div>' +
+                    '<button id="copySlackEnv" style="position:absolute; top:8px; right:8px; font-size:12px; background:#F3F4F6; color:#111827; border:1px solid #E5E7EB; border-radius:6px; padding:4px 8px; cursor:pointer;">Copy</button>' +
+                    '<pre style="background:#0B1020; color:#E5E7EB; padding:36px 12px 12px; border-radius:8px; font-size:13px; overflow:auto; border:1px solid #111827;"><code id="slackEnvBlock">SLACK_BOT_TOKEN=xoxb-your-bot-token-here\\nSLACK_SIGNING_SECRET=your-signing-secret-here</code></pre>' +
+                '</div>' +
+                '<p style="margin:0 0 8px;"><strong>Required bot scopes:</strong></p>' +
+                '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 16px;">' +
+                    '<span style="display:inline-block; background:#F1F5F9; color:#0F172A; border:1px solid #E2E8F0; padding:4px 8px; border-radius:9999px; font-size:12px;">chat:write</span>' +
+                    '<span style="display:inline-block; background:#F1F5F9; color:#0F172A; border:1px solid #E2E8F0; padding:4px 8px; border-radius:9999px; font-size:12px;">files:write</span>' +
+                    '<span style="display:inline-block; background:#F1F5F9; color:#0F172A; border:1px solid #E2E8F0; padding:4px 8px; border-radius:9999px; font-size:12px;">users:read</span>' +
+                '</div>' +
+                '<ol style="margin:0; padding-left:20px; font-size:14px;">' +
+                    '<li>Open <a href="https://api.slack.com/apps" target="_blank">api.slack.com/apps</a> and create/select your app</li>' +
+                    '<li>Under "OAuth & Permissions", install the app and copy the Bot Token</li>' +
+                    '<li>Under "Basic Information", copy the Signing Secret</li>' +
+                    '<li>Add the scopes above and reinstall if prompted</li>' +
+                    '<li>Restart the server after updating <code>.env</code></li>' +
+                '</ol>' +
+            '</div>';
+            
+            // Create a modal-like display
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;';
+            
+            const content = document.createElement('div');
+            content.style.cssText = 'background: white; padding: 28px; border-radius: 12px; width: 100%; max-width: 720px; max-height: 80vh; overflow-y: auto; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.15);';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '×';
+            closeBtn.style.cssText = 'position: absolute; top: 10px; right: 14px; background: none; border: none; font-size: 26px; cursor: pointer; color: #94A3B8;';
+            closeBtn.onclick = () => modal.remove();
+            
+            content.innerHTML = message;
+            content.appendChild(closeBtn);
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            // Close on outside click
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+            
+            // Copy env content
+            const copyBtn = content.querySelector('#copySlackEnv');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async () => {
+                    const text = content.querySelector('#slackEnvBlock')?.innerText || '';
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        copyBtn.textContent = 'Copied';
+                        setTimeout(() => copyBtn.textContent = 'Copy', 1200);
+                    } catch (err) {
+                        // no-op
+                    }
+                });
+            }
+        }
+        
+        // Utility function to show notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'alert alert--' + type + ' alert--dismissible';
+            notification.innerHTML = '<span class="alert-message">' + message + '</span><button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>';
+            
+            // Insert at the top of the page
+            const main = document.getElementById('main-content');
+            main.insertBefore(notification, main.firstChild);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        // Initialize dropdown functionality
+        function initDropdowns() {
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdown = this.closest('.dropdown');
+                    const menu = dropdown.querySelector('.dropdown-menu');
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    
+                    // Close other dropdowns
+                    document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+                        if (otherMenu !== menu) {
+                            otherMenu.classList.remove('dropdown-menu--open');
+                            otherMenu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    menu.classList.toggle('dropdown-menu--open', !isExpanded);
+                });
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('dropdown-menu--open');
+                        menu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        }
+        </script>
+    `
+}) %>

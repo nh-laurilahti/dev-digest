@@ -1,0 +1,1663 @@
+<% const title = 'Repository Management' %>
+<% const description = 'Add, manage, and configure repositories for digest generation' %>
+<% const bodyClass = 'repositories-page' %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- SEO Meta Tags -->
+    <title><%= title %> - Daily Dev Digest</title>
+    <meta name="description" content="<%= description %>">
+    <meta name="keywords" content="repository, management, github, digest, development">
+    <meta name="author" content="Daily Dev Digest">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/design-system.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+    
+    
+    <!-- Theme color for mobile browsers -->
+    <meta name="theme-color" content="#f59e0b">
+</head>
+<body class="<%= bodyClass %>">
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <!-- Navigation -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="navbar-container">
+            <!-- Brand/Logo -->
+            <div class="navbar-brand">
+                <a href="/dashboard" class="navbar-logo">
+                    <span class="sr-only">Daily Dev Digest</span>
+                    <div class="navbar-logo-text">
+                        <span class="brand-icon">📊</span>
+                        <span class="brand-text">Daily Dev Digest</span>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <div class="navbar-menu">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a href="/dashboard" class="nav-link">
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/archive" class="nav-link">
+                            Archive
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/repositories" class="nav-link nav-link--active">
+                            Repositories
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/settings" class="nav-link">
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main id="main-content" class="main-content repositories-main">
+        <!-- Repository Header -->
+        <section class="repositories-header">
+            <div class="container">
+                <div class="repositories-header-content">
+                    <div class="repositories-title-section">
+                        <h1 class="repositories-title">Repository Management</h1>
+                        <p class="repositories-subtitle">
+                            Add and manage GitHub repositories for digest generation
+                        </p>
+                    </div>
+                    <div class="repositories-actions">
+                        <button id="addRepositoryBtn" class="btn btn--primary">
+                            Add Repository
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Repository Modal -->
+        <div id="addRepositoryModal" class="modal" style="display: none;">
+            <div class="modal-overlay"></div>
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3 class="modal-title">Add Repository</h3>
+                    <button type="button" class="modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRepositoryForm">
+                        <div class="form-group">
+                            <label for="repositoryUrl" class="form-label">
+                                GitHub Repository <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="repositoryUrl" 
+                                class="form-input"
+                                placeholder="owner/repository"
+                                required
+                            >
+                            <div class="form-help">
+                                Enter in owner/repo format (e.g., mattermost/mattermost)
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="repositoryName" class="form-label">Custom Name (Optional)</label>
+                            <input 
+                                type="text" 
+                                id="repositoryName" 
+                                class="form-input"
+                                placeholder="Custom display name for this repository"
+                            >
+                            <div class="form-help">
+                                Leave blank to use the repository name from GitHub
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="repositoryDescription" class="form-label">Description (Optional)</label>
+                            <textarea 
+                                id="repositoryDescription" 
+                                class="form-textarea"
+                                rows="3"
+                                placeholder="Custom description for this repository"
+                            ></textarea>
+                            <div class="form-help">
+                                Leave blank to use the description from GitHub
+                            </div>
+                        </div>
+
+                        <!-- Repository validation status -->
+                        <div id="validationStatus" class="validation-status" style="display: none;">
+                            <!-- Validation results will be displayed here -->
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn--ghost" data-action="cancel">
+                                Cancel
+                            </button>
+                            <button type="button" class="btn btn--secondary" id="validateBtn" disabled>
+                                Validate Repository
+                            </button>
+                            <button type="submit" class="btn btn--primary" id="addBtn" disabled>
+                                Add Repository
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Controls -->
+        <section class="repositories-controls">
+            <div class="container">
+                <div class="glass-container">
+                    <div class="controls-grid">
+                        <!-- Search Input -->
+                        <div class="control-group">
+                            <label for="searchInput" class="control-label">Search Repositories</label>
+                            <div class="search-input-wrapper">
+                                <input 
+                                    type="text" 
+                                    id="searchInput" 
+                                    class="form-input search-input"
+                                    placeholder="Search by name, path, or description..."
+                                    aria-describedby="search-help"
+                                >
+                                <button type="button" class="search-clear" id="clearSearch" style="display: none;">
+                                    ✕
+                                </button>
+                            </div>
+                            <div id="search-help" class="form-help">
+                                Search through repository names, paths, and descriptions
+                            </div>
+                        </div>
+                        
+                        <!-- Status Filter -->
+                        <div class="control-group">
+                            <label for="statusFilter" class="control-label">Status</label>
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Repositories</option>
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Sort Options -->
+                        <div class="control-group">
+                            <label for="sortBy" class="control-label">Sort By</label>
+                            <select id="sortBy" class="form-select">
+                                <option value="updatedAt:desc">Recently Updated</option>
+                                <option value="createdAt:desc">Recently Added</option>
+                                <option value="name:asc">Name A-Z</option>
+                                <option value="name:desc">Name Z-A</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="controls-actions">
+                        <button type="button" id="applyFilters" class="btn btn--primary btn--sm">
+                            Apply Filters
+                        </button>
+                        <button type="button" id="clearFilters" class="btn btn--ghost btn--sm">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Repositories Grid -->
+        <section class="repositories-content">
+            <div class="container">
+                <!-- Results Summary -->
+                <div class="results-summary">
+                    <div class="results-info">
+                        <span id="resultsCount">Loading...</span>
+                        <span id="activeFilters" class="active-filters"></span>
+                    </div>
+                    <div class="view-options">
+                        <button type="button" class="view-toggle view-toggle--active" data-view="grid" aria-label="Grid view">
+                            ⊞
+                        </button>
+                        <button type="button" class="view-toggle" data-view="list" aria-label="List view">
+                            ☰
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Repositories Container -->
+                <div id="repositoriesContainer" class="repositories-container view-grid">
+                    <!-- Loading State -->
+                    <div class="repositories-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading repositories...</p>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                <div id="pagination" class="pagination" style="display: none;">
+                    <!-- Pagination will be generated here -->
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    
+    <!-- Repository Actions Modal -->
+    <div id="repositoryModal" class="modal" style="display: none;">
+        <div class="modal-overlay"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Repository Actions</h3>
+                <button type="button" class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-actions">
+                    <button type="button" class="btn btn--ghost btn--block modal-action" data-action="view">
+                        View Details
+                    </button>
+                    <button type="button" class="btn btn--ghost btn--block modal-action" data-action="toggle-status">
+                        Toggle Status
+                    </button>
+                    <button type="button" class="btn btn--ghost btn--block modal-action" data-action="generate-digest">
+                        Generate Digest
+                    </button>
+                    <div class="modal-divider"></div>
+                    <button type="button" class="btn btn--danger btn--block modal-action" data-action="delete">
+                        Remove Repository
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // User data
+        window.user = <% if (typeof user !== 'undefined' && user) { %><%- JSON.stringify(user) %><% } else { %>{}<% } %>;
+        
+        // Repository management state
+        let currentPage = 1;
+        let currentFilters = {};
+        let currentSort = 'updatedAt:desc';
+        let currentView = 'grid';
+        let selectedRepository = null;
+        let validationResult = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initRepositories();
+        });
+        
+        function initRepositories() {
+            loadRepositories();
+            initControls();
+            initModal();
+            initViewToggle();
+            initDropdowns();
+            initAddRepository();
+        }
+        
+        // Load repositories with current filters
+        async function loadRepositories() {
+            try {
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    limit: 12,
+                    sortBy: currentSort.split(':')[0],
+                    sortOrder: currentSort.split(':')[1],
+                    ...currentFilters
+                });
+                
+                const response = await fetch(`/api/v1/repos?${params}`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load repositories');
+                
+                const data = await response.json();
+                renderRepositories(data.data.repositories || []);
+                renderPagination(data.data.pagination || {});
+                updateResultsCount(data.data.pagination?.total || 0);
+                
+            } catch (error) {
+                console.error('Failed to load repositories:', error);
+                renderError('Failed to load repositories. Please try again.');
+            }
+        }
+        
+        // Render repositories grid/list
+        function renderRepositories(repositories) {
+            const container = document.getElementById('repositoriesContainer');
+            
+            if (repositories.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📁</div>
+                        <h3 class="empty-state-title">No repositories found</h3>
+                        <p class="empty-state-description">
+                            ${Object.keys(currentFilters).length > 0 
+                                ? 'Try adjusting your filters or search terms' 
+                                : 'Add your first repository to start generating digests'}
+                        </p>
+                        <button class="btn btn--primary" onclick="showAddRepositoryModal()">
+                            Add Repository
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.className = `repositories-container view-${currentView}`;
+            container.innerHTML = repositories.map(repo => {
+                const createdDate = new Date(repo.createdAt).toLocaleDateString();
+                const updatedDate = new Date(repo.updatedAt).toLocaleDateString();
+                const statusClass = repo.active ? 'active' : 'inactive';
+                
+                return `
+                    <div class="repository-card" data-repo-id="${repo.id}">
+                        <div class="repository-card-header">
+                            <h3 class="repository-card-title">
+                                ${repo.name || repo.path.split('/')[1]}
+                            </h3>
+                            <div class="repository-card-status">
+                                <span class="status-indicator status-indicator--${statusClass}"></span>
+                                <span class="status-text">${repo.active ? 'Active' : 'Inactive'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="repository-card-path">
+                            <a href="https://github.com/${repo.path}" target="_blank" rel="noopener noreferrer" class="repo-link">
+                                ${repo.path}
+                            </a>
+                        </div>
+                        
+                        ${repo.description ? `
+                            <div class="repository-card-description">
+                                ${repo.description}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="repository-card-meta">
+                            <div class="repo-meta-item">
+                                <span class="meta-label">Added</span>
+                                <span class="meta-value">${createdDate}</span>
+                            </div>
+                            <div class="repo-meta-item">
+                                <span class="meta-label">Updated</span>
+                                <span class="meta-value">${updatedDate}</span>
+                            </div>
+                            <div class="repo-meta-item">
+                                <span class="meta-label">Default Branch</span>
+                                <span class="meta-value">${repo.defaultBranch || 'main'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="repository-card-actions">
+                            <button type="button" class="btn btn--ghost btn--sm" data-action="view" data-repo-id="${repo.id}">
+                                View Details
+                            </button>
+                            <button type="button" class="btn btn--ghost btn--sm repo-actions-btn" data-repo-id="${repo.id}">
+                                ⋯
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Initialize add repository functionality
+        function initAddRepository() {
+            const addBtn = document.getElementById('addRepositoryBtn');
+            const modal = document.getElementById('addRepositoryModal');
+            const form = document.getElementById('addRepositoryForm');
+            const urlInput = document.getElementById('repositoryUrl');
+            const validateBtn = document.getElementById('validateBtn');
+            const addRepoBtn = document.getElementById('addBtn');
+            
+            addBtn.addEventListener('click', showAddRepositoryModal);
+            
+            // URL input validation
+            urlInput.addEventListener('input', function() {
+                const url = this.value.trim();
+                const isValidGithubUrl = /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(url);
+                
+                validateBtn.disabled = !isValidGithubUrl;
+                addRepoBtn.disabled = true;
+                hideValidationStatus();
+                
+                if (url && !isValidGithubUrl) {
+                    showValidationError('Please enter a valid repository in owner/repo format');
+                }
+            });
+            
+            // Validate repository
+            validateBtn.addEventListener('click', validateRepository);
+            
+            // Form submission
+            form.addEventListener('submit', addRepository);
+        }
+        
+        function showAddRepositoryModal() {
+            document.getElementById('addRepositoryModal').style.display = 'block';
+            document.getElementById('repositoryUrl').focus();
+        }
+        
+        function hideAddRepositoryModal() {
+            document.getElementById('addRepositoryModal').style.display = 'none';
+            document.getElementById('addRepositoryForm').reset();
+            document.getElementById('validateBtn').disabled = true;
+            document.getElementById('addBtn').disabled = true;
+            hideValidationStatus();
+            validationResult = null;
+        }
+        
+        async function validateRepository() {
+            const url = document.getElementById('repositoryUrl').value.trim();
+            if (!url) return;
+            
+            try {
+                showValidationLoading();
+                
+                const response = await fetch('/api/v1/repos/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ repository: url })
+                });
+                
+                if (!response.ok) throw new Error('Validation failed');
+                
+                const data = await response.json();
+                validationResult = data.data;
+                
+                showValidationResult(validationResult);
+                document.getElementById('addBtn').disabled = !validationResult.valid || validationResult.alreadyAdded;
+                
+            } catch (error) {
+                console.error('Validation error:', error);
+                showValidationError('Failed to validate repository. Please try again.');
+            }
+        }
+        
+        async function addRepository(e) {
+            e.preventDefault();
+            
+            if (!validationResult || !validationResult.valid || validationResult.alreadyAdded) {
+                return;
+            }
+            
+            const url = document.getElementById('repositoryUrl').value.trim();
+            const name = document.getElementById('repositoryName').value.trim();
+            const description = document.getElementById('repositoryDescription').value.trim();
+            
+            try {
+                const response = await fetch('/api/v1/repos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        repository: url,
+                        name: name || undefined,
+                        description: description || undefined,
+                        isPrivate: validationResult.private
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || 'Failed to add repository');
+                }
+                
+                hideAddRepositoryModal();
+                loadRepositories(); // Reload the list
+                
+            } catch (error) {
+                console.error('Add repository error:', error);
+                showValidationError(error.message || 'Failed to add repository. Please try again.');
+            }
+        }
+        
+        function showValidationLoading() {
+            const status = document.getElementById('validationStatus');
+            status.innerHTML = `
+                <div class="validation-loading">
+                    <div class="loading-spinner-sm"></div>
+                    <span>Validating repository...</span>
+                </div>
+            `;
+            status.style.display = 'block';
+        }
+        
+        function showValidationResult(result) {
+            const status = document.getElementById('validationStatus');
+            
+            if (result.alreadyAdded) {
+                status.innerHTML = `
+                    <div class="validation-error">
+                        <span class="validation-icon">⚠️</span>
+                        <span>Repository already exists in your account</span>
+                    </div>
+                `;
+            } else if (!result.exists) {
+                status.innerHTML = `
+                    <div class="validation-error">
+                        <span class="validation-icon">❌</span>
+                        <span>Repository not found on GitHub</span>
+                    </div>
+                `;
+            } else if (!result.accessible) {
+                status.innerHTML = `
+                    <div class="validation-error">
+                        <span class="validation-icon">🔒</span>
+                        <span>Repository is not accessible with current permissions</span>
+                    </div>
+                `;
+            } else if (result.archived) {
+                status.innerHTML = `
+                    <div class="validation-warning">
+                        <span class="validation-icon">📦</span>
+                        <span>Repository is archived but can still be added</span>
+                    </div>
+                `;
+            } else {
+                status.innerHTML = `
+                    <div class="validation-success">
+                        <span class="validation-icon">✅</span>
+                        <span>Repository validated successfully</span>
+                        ${result.repositoryInfo ? `
+                            <div class="repo-info">
+                                <div class="repo-info-item">
+                                    <strong>${result.repositoryInfo.name}</strong>
+                                    ${result.repositoryInfo.description ? `<p>${result.repositoryInfo.description}</p>` : ''}
+                                </div>
+                                <div class="repo-info-meta">
+                                    ${result.repositoryInfo.language ? `<span class="repo-badge">${result.repositoryInfo.language}</span>` : ''}
+                                    ${result.repositoryInfo.stars ? `<span class="repo-badge">⭐ ${result.repositoryInfo.stars}</span>` : ''}
+                                    ${result.private ? '<span class="repo-badge">🔒 Private</span>' : '<span class="repo-badge">🌍 Public</span>'}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+            
+            status.style.display = 'block';
+        }
+        
+        function showValidationError(message) {
+            const status = document.getElementById('validationStatus');
+            status.innerHTML = `
+                <div class="validation-error">
+                    <span class="validation-icon">❌</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            status.style.display = 'block';
+        }
+        
+        function hideValidationStatus() {
+            document.getElementById('validationStatus').style.display = 'none';
+        }
+        
+        // Repository actions
+        async function handleRepositoryAction(action, repoId) {
+            switch (action) {
+                case 'view':
+                    // Navigate to repository details (you could create a detail page)
+                    console.log('View repository:', repoId);
+                    break;
+                    
+                case 'toggle-status':
+                    await toggleRepositoryStatus(repoId);
+                    break;
+                    
+                case 'generate-digest':
+                    await generateDigestForRepository(repoId);
+                    break;
+                    
+                case 'delete':
+                    if (confirm('Are you sure you want to remove this repository? This will also remove all associated digests.')) {
+                        await deleteRepository(repoId);
+                    }
+                    break;
+            }
+        }
+        
+        async function toggleRepositoryStatus(repoId) {
+            try {
+                // First get current status
+                const getResponse = await fetch(`/api/v1/repos/${repoId}`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!getResponse.ok) throw new Error('Failed to get repository status');
+                
+                const repoData = await getResponse.json();
+                const currentStatus = repoData.data.repository.active;
+                
+                // Toggle the status
+                const response = await fetch(`/api/v1/repos/${repoId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        active: !currentStatus
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to update repository status');
+                
+                loadRepositories(); // Reload to show updated status
+                
+            } catch (error) {
+                console.error('Failed to toggle repository status:', error);
+                alert('Failed to update repository status. Please try again.');
+            }
+        }
+        
+        async function generateDigestForRepository(repoId) {
+            try {
+                const response = await fetch('/api/v1/digests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        repositories: [repoId],
+                        title: `Digest for Repository`,
+                        description: 'Generated from repository management'
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to create digest');
+                
+                const data = await response.json();
+                if (data.data.job?.id) {
+                    window.location.href = `/api/jobs/${data.data.job.id}`;
+                }
+                
+            } catch (error) {
+                console.error('Failed to generate digest:', error);
+                alert('Failed to generate digest. Please try again.');
+            }
+        }
+        
+        async function deleteRepository(repoId) {
+            try {
+                const response = await fetch(`/api/v1/repos/${repoId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || 'Failed to delete repository');
+                }
+                
+                loadRepositories(); // Reload the list
+                
+            } catch (error) {
+                console.error('Failed to delete repository:', error);
+                alert(error.message || 'Failed to delete repository. Please try again.');
+            }
+        }
+        
+        // Initialize controls (similar to archive.ejs implementation)
+        function initControls() {
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
+            const applyFilters = document.getElementById('applyFilters');
+            const clearFilters = document.getElementById('clearFilters');
+            
+            // Search functionality
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const value = this.value.trim();
+                
+                if (value) {
+                    clearSearch.style.display = 'block';
+                } else {
+                    clearSearch.style.display = 'none';
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    currentFilters.search = value || undefined;
+                    currentPage = 1;
+                    loadRepositories();
+                }, 500);
+            });
+            
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                this.style.display = 'none';
+                delete currentFilters.search;
+                currentPage = 1;
+                loadRepositories();
+            });
+            
+            // Apply filters
+            applyFilters.addEventListener('click', function() {
+                const statusFilter = document.getElementById('statusFilter').value;
+                const sortBy = document.getElementById('sortBy').value;
+                
+                currentFilters.isActive = statusFilter !== '' ? statusFilter === 'true' : undefined;
+                currentSort = sortBy;
+                currentPage = 1;
+                
+                loadRepositories();
+            });
+            
+            // Clear all filters
+            clearFilters.addEventListener('click', function() {
+                searchInput.value = '';
+                clearSearch.style.display = 'none';
+                document.getElementById('statusFilter').value = '';
+                document.getElementById('sortBy').value = 'updatedAt:desc';
+                
+                currentFilters = {};
+                currentSort = 'updatedAt:desc';
+                currentPage = 1;
+                
+                loadRepositories();
+            });
+            
+            // Pagination
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('.pagination-btn[data-page]')) {
+                    currentPage = parseInt(e.target.dataset.page);
+                    loadRepositories();
+                }
+            });
+            
+            // Repository actions
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('[data-action="view"]')) {
+                    const repoId = e.target.dataset.repoId;
+                    handleRepositoryAction('view', repoId);
+                }
+                
+                if (e.target.matches('.repo-actions-btn')) {
+                    selectedRepository = e.target.dataset.repoId;
+                    showModal();
+                }
+            });
+        }
+        
+        // Modal functionality (similar to archive.ejs)
+        function initModal() {
+            const modal = document.getElementById('repositoryModal');
+            const addModal = document.getElementById('addRepositoryModal');
+            
+            // Repository actions modal
+            const closeBtn = modal.querySelector('.modal-close');
+            const overlay = modal.querySelector('.modal-overlay');
+            
+            closeBtn.addEventListener('click', hideModal);
+            overlay.addEventListener('click', hideModal);
+            
+            // Add repository modal
+            const addCloseBtn = addModal.querySelector('.modal-close');
+            const addOverlay = addModal.querySelector('.modal-overlay');
+            
+            addCloseBtn.addEventListener('click', hideAddRepositoryModal);
+            addOverlay.addEventListener('click', hideAddRepositoryModal);
+            
+            // Modal actions
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('.modal-action')) {
+                    const action = e.target.dataset.action;
+                    if (action === 'cancel') {
+                        hideAddRepositoryModal();
+                    } else {
+                        handleRepositoryAction(action, selectedRepository);
+                        hideModal();
+                    }
+                }
+            });
+        }
+        
+        function showModal() {
+            document.getElementById('repositoryModal').style.display = 'block';
+        }
+        
+        function hideModal() {
+            document.getElementById('repositoryModal').style.display = 'none';
+            selectedRepository = null;
+        }
+        
+        // Pagination rendering (reuse from archive.ejs)
+        function renderPagination(pagination) {
+            const container = document.getElementById('pagination');
+            
+            if (!pagination || pagination.pages <= 1) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'flex';
+            const { page: current, pages: totalPages, hasNext, hasPrev } = pagination;
+            
+            let paginationHTML = '';
+            
+            // Previous button
+            if (hasPrev) {
+                paginationHTML += `<button class="pagination-btn" data-page="${current - 1}">← Previous</button>`;
+            }
+            
+            // Page numbers
+            const startPage = Math.max(1, current - 2);
+            const endPage = Math.min(totalPages, current + 2);
+            
+            if (startPage > 1) {
+                paginationHTML += `<button class="pagination-btn" data-page="1">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += `<span class="pagination-ellipsis">…</span>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button class="pagination-btn ${i === current ? 'pagination-btn--active' : ''}" data-page="${i}">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<span class="pagination-ellipsis">…</span>`;
+                }
+                paginationHTML += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+            }
+            
+            // Next button
+            if (hasNext) {
+                paginationHTML += `<button class="pagination-btn" data-page="${current + 1}">Next →</button>`;
+            }
+            
+            container.innerHTML = paginationHTML;
+        }
+        
+        // Update results count
+        function updateResultsCount(total) {
+            const countElement = document.getElementById('resultsCount');
+            const filtersElement = document.getElementById('activeFilters');
+            
+            countElement.textContent = `${total} repositor${total !== 1 ? 'ies' : 'y'} found`;
+            
+            // Show active filters
+            const activeFilters = Object.keys(currentFilters).filter(key => currentFilters[key] !== undefined);
+            if (activeFilters.length > 0) {
+                filtersElement.innerHTML = activeFilters.map(key => {
+                    const value = currentFilters[key];
+                    return `<span class="filter-tag">${key}: ${value}</span>`;
+                }).join('');
+                filtersElement.style.display = 'block';
+            } else {
+                filtersElement.style.display = 'none';
+            }
+        }
+        
+        // Render error state
+        function renderError(message) {
+            const container = document.getElementById('repositoriesContainer');
+            container.innerHTML = `
+                <div class="error-state">
+                    <div class="error-state-icon">❌</div>
+                    <h3 class="error-state-title">Error</h3>
+                    <p class="error-state-description">${message}</p>
+                    <button type="button" class="btn btn--primary" onclick="loadRepositories()">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+        
+        // Initialize view toggle
+        function initViewToggle() {
+            const viewToggles = document.querySelectorAll('.view-toggle');
+            
+            viewToggles.forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const view = this.dataset.view;
+                    
+                    viewToggles.forEach(t => t.classList.remove('view-toggle--active'));
+                    this.classList.add('view-toggle--active');
+                    
+                    currentView = view;
+                    
+                    const container = document.getElementById('repositoriesContainer');
+                    container.className = `repositories-container view-${view}`;
+                });
+            });
+        }
+        
+        // Initialize dropdown functionality
+        function initDropdowns() {
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdown = this.closest('.dropdown');
+                    const menu = dropdown.querySelector('.dropdown-menu');
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    
+                    // Close other dropdowns
+                    document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+                        if (otherMenu !== menu) {
+                            otherMenu.classList.remove('dropdown-menu--open');
+                            otherMenu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    menu.classList.toggle('dropdown-menu--open', !isExpanded);
+                });
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('dropdown-menu--open');
+                        menu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        }
+    </script>
+
+    <style>
+        /* Repository-specific styles */
+        .repositories-page {
+            background: var(--color-bg-primary);
+        }
+
+        .repositories-header {
+            padding: var(--space-8) 0 var(--space-6) 0;
+        }
+
+        .repositories-header-content {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: var(--space-8);
+        }
+
+        .repositories-title-section h1 {
+            margin-bottom: var(--space-3);
+        }
+
+        .repositories-subtitle {
+            color: var(--color-text-secondary);
+            margin: 0;
+        }
+
+        .repositories-controls {
+            padding: 0 0 var(--space-8) 0;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-6);
+            padding: var(--space-6);
+            margin-bottom: var(--space-4);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .control-label {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-primary);
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-clear {
+            position: absolute;
+            right: var(--space-3);
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--color-text-tertiary);
+            cursor: pointer;
+            padding: var(--space-1);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-sm);
+        }
+
+        .search-clear:hover {
+            background-color: rgba(255, 243, 224, 0.1);
+            color: var(--color-text-primary);
+        }
+
+        .controls-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: flex-end;
+            padding: 0 var(--space-6) var(--space-6) var(--space-6);
+        }
+
+        .repositories-content {
+            padding: 0 0 var(--space-12) 0;
+        }
+
+        .results-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-6);
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+        }
+
+        .results-info {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+        }
+
+        .active-filters {
+            display: none;
+        }
+
+        .filter-tag {
+            display: inline-block;
+            padding: var(--space-1) var(--space-2);
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--color-brand-amber);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-xs);
+            margin-left: var(--space-2);
+        }
+
+        .view-options {
+            display: flex;
+            gap: var(--space-2);
+        }
+
+        .view-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: none;
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-md);
+            color: var(--color-text-tertiary);
+            cursor: pointer;
+            transition: all var(--duration-fast) var(--ease-out);
+        }
+
+        .view-toggle:hover {
+            border-color: var(--color-border-medium);
+            color: var(--color-text-primary);
+        }
+
+        .view-toggle--active {
+            background-color: var(--color-brand-amber);
+            border-color: var(--color-brand-amber);
+            color: var(--color-brand-text);
+        }
+
+        /* Repository Cards */
+        .repositories-container {
+            min-height: 400px;
+        }
+
+        .view-grid .repositories-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .view-list .repositories-container {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .repository-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            backdrop-filter: var(--glass-backdrop-filter);
+            -webkit-backdrop-filter: var(--glass-backdrop-filter);
+            padding: var(--space-6);
+            transition: all var(--duration-normal) var(--ease-out);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .repository-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('../images/noise-texture.svg');
+            background-size: 200px 200px;
+            opacity: 0.4;
+            mix-blend-mode: overlay;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .repository-card > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .repository-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 243, 224, 0.15);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .repository-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .repository-card-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
+            margin: 0;
+            line-height: var(--line-height-tight);
+        }
+
+        .repository-card-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            flex-shrink: 0;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-indicator--active {
+            background-color: var(--color-success);
+        }
+
+        .status-indicator--inactive {
+            background-color: var(--color-text-tertiary);
+        }
+
+        .status-text {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .repository-card-path {
+            margin-bottom: var(--space-4);
+        }
+
+        .repo-link {
+            font-family: var(--font-family-mono);
+            font-size: var(--font-size-sm);
+            color: var(--color-brand-amber);
+            text-decoration: none;
+            transition: color var(--duration-fast) var(--ease-out);
+        }
+
+        .repo-link:hover {
+            color: var(--color-brand-amber-light);
+        }
+
+        .repository-card-description {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+            line-height: var(--line-height-normal);
+            margin-bottom: var(--space-4);
+        }
+
+        .repository-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .repo-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .meta-label {
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .meta-value {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-primary);
+        }
+
+        .repository-card-actions {
+            display: flex;
+            gap: var(--space-3);
+            justify-content: flex-end;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: var(--z-modal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-4);
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--color-overlay-medium);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .modal-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-2xl);
+            backdrop-filter: var(--glass-backdrop-filter);
+            -webkit-backdrop-filter: var(--glass-backdrop-filter);
+            box-shadow: var(--glass-shadow);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            z-index: var(--z-modal);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--color-border-subtle);
+        }
+
+        .modal-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: var(--font-size-xl);
+            color: var(--color-text-tertiary);
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--radius-sm);
+            transition: all var(--duration-fast) var(--ease-out);
+        }
+
+        .modal-close:hover {
+            background-color: rgba(255, 243, 224, 0.1);
+            color: var(--color-text-primary);
+        }
+
+        .modal-body {
+            padding: var(--space-6);
+        }
+
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .modal-divider {
+            height: 1px;
+            background-color: var(--color-border-subtle);
+            margin: var(--space-3) 0;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: var(--space-6);
+        }
+
+        .form-label {
+            display: block;
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .required {
+            color: var(--color-error);
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: var(--space-3);
+            background-color: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-medium);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            font-size: var(--font-size-base);
+            transition: all var(--duration-fast) var(--ease-out);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--color-brand-amber);
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+        }
+
+        .form-help {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-tertiary);
+            margin-top: var(--space-2);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Validation Status Styles */
+        .validation-status {
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+        }
+
+        .validation-success {
+            background-color: var(--color-success-bg);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--color-success);
+        }
+
+        .validation-error {
+            background-color: var(--color-error-bg);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--color-error);
+        }
+
+        .validation-warning {
+            background-color: var(--color-warning-bg);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--color-warning);
+        }
+
+        .validation-loading {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            color: var(--color-text-secondary);
+        }
+
+        .validation-icon {
+            font-size: var(--font-size-lg);
+            margin-right: var(--space-2);
+        }
+
+        .loading-spinner-sm {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--color-border-subtle);
+            border-top: 2px solid var(--color-brand-amber);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .repo-info {
+            margin-top: var(--space-3);
+            padding-top: var(--space-3);
+            border-top: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .repo-info-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-2);
+            margin-top: var(--space-2);
+        }
+
+        .repo-badge {
+            display: inline-block;
+            padding: var(--space-1) var(--space-2);
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--color-success);
+            border-radius: var(--radius-sm);
+            font-size: var(--font-size-xs);
+        }
+
+        /* Loading and Error States */
+        .repositories-loading,
+        .error-state,
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-12);
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-border-subtle);
+            border-top: 3px solid var(--color-brand-amber);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: var(--space-4);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state-icon,
+        .error-state-icon {
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--space-4);
+        }
+
+        .empty-state-title,
+        .error-state-title {
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-3);
+        }
+
+        .empty-state-description,
+        .error-state-description {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-6);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--space-2);
+            margin-top: var(--space-8);
+        }
+
+        .pagination-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: var(--space-2) var(--space-3);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            color: var(--color-text-primary);
+            text-decoration: none;
+            transition: all var(--duration-fast) var(--ease-out);
+            cursor: pointer;
+        }
+
+        .pagination-btn:hover {
+            background-color: rgba(255, 243, 224, 0.1);
+            border-color: rgba(255, 243, 224, 0.2);
+        }
+
+        .pagination-btn--active {
+            background-color: var(--color-brand-amber);
+            border-color: var(--color-brand-amber);
+            color: var(--color-brand-text);
+        }
+
+        .pagination-ellipsis {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            color: var(--color-text-tertiary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .view-grid .repositories-container {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .repositories-header-content {
+                flex-direction: column;
+                gap: var(--space-6);
+            }
+
+            .repositories-actions {
+                width: 100%;
+            }
+
+            .repositories-actions .btn {
+                width: 100%;
+            }
+
+            .results-summary {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-4);
+            }
+
+            .view-options {
+                align-self: flex-end;
+            }
+
+            .view-grid .repositories-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .controls-actions {
+                flex-direction: column;
+            }
+
+            .repository-card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-2);
+            }
+
+            .repository-card-meta {
+                flex-direction: column;
+                gap: var(--space-2);
+            }
+
+            .repository-card-actions {
+                justify-content: stretch;
+            }
+
+            .repository-card-actions .btn {
+                flex: 1;
+            }
+
+            .modal-container {
+                margin: var(--space-2);
+                max-width: none;
+            }
+        }
+    </style>
+</body>
+</html>

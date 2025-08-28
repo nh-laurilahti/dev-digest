@@ -1,0 +1,11 @@
+<% const title = 'Sign In' %>
+<% const description = 'Sign in to your Daily Dev Digest account to access your personalized developer newsletters.' %>
+<% const bodyClass = 'auth-page' %>
+
+<%- include('../layouts/base', {
+    title,
+    description,
+    bodyClass,
+    currentPage: 'login',
+    body: include('../partials/auth-login')
+}) %>

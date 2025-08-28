@@ -1,0 +1,11 @@
+<% const title = 'Create Account' %>
+<% const description = 'Create your Daily Dev Digest account to start generating personalized developer newsletters.' %>
+<% const bodyClass = 'auth-page' %>
+
+<%- include('../layouts/base', {
+    title,
+    description,
+    bodyClass,
+    currentPage: 'register',
+    body: include('../partials/auth-register')
+}) %>

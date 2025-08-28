@@ -1,0 +1,144 @@
+<%# 
+  Digest Card Component - Shows digest information with actions
+  Props:
+  - digest: object - The digest object
+  - showActions: boolean - Whether to show action buttons
+  - isLoading: boolean - Whether to show loading skeleton
+%>
+
+<% 
+  const digest = locals.digest;
+  const showActions = locals.showActions !== false;
+  const isLoading = locals.isLoading === true;
+%>
+
+<% if (isLoading) { %>
+  <!-- Skeleton Loading State -->
+  <div class="digest-card skeleton-card">
+    <div class="skeleton-card-header">
+      <div class="skeleton skeleton--circle"></div>
+      <div style="flex: 1;">
+        <div class="skeleton skeleton--text skeleton--text-lg" style="width: 70%; margin-bottom: var(--space-1);"></div>
+        <div class="skeleton skeleton--text skeleton--text-sm" style="width: 40%;"></div>
+      </div>
+    </div>
+    <div class="skeleton-card-content">
+      <div class="skeleton skeleton--text" style="width: 100%;"></div>
+      <div class="skeleton skeleton--text" style="width: 80%;"></div>
+      <div class="skeleton skeleton--text" style="width: 60%;"></div>
+    </div>
+    <div class="skeleton-card-footer">
+      <div class="skeleton skeleton--button"></div>
+      <div class="skeleton skeleton--text skeleton--text-sm" style="width: 100px;"></div>
+    </div>
+  </div>
+<% } else if (digest) { %>
+  <!-- Actual Digest Card -->
+  <div class="digest-card glass-container glass-container--subtle" data-digest-id="<%= digest.id %>">
+    <div class="digest-card-header">
+      <div class="digest-card-icon">
+        <% if (digest.status === 'COMPLETED') { %>
+          📊
+        <% } else if (digest.status === 'RUNNING') { %>
+          ⏳
+        <% } else if (digest.status === 'FAILED') { %>
+          ❌
+        <% } else { %>
+          📋
+        <% } %>
+      </div>
+      <div class="digest-card-info">
+        <h3 class="digest-card-title">
+          <%= digest.title || `Digest #${digest.id}` %>
+        </h3>
+        <div class="digest-card-meta">
+          <span class="digest-card-date">Created <%= new Date(digest.createdAt).toLocaleDateString() %></span>
+          <% if (digest.repositories && digest.repositories.length > 0) { %>
+            <span class="digest-card-repos">Repository <%= digest.repositories[0].name || digest.repositories[0].owner || 'Unknown' %></span>
+          <% } %>
+          <% if (digest.stats && digest.stats.pullRequests !== undefined) { %>
+            <span class="digest-card-prs">Pull Requests <%= digest.stats.pullRequests %></span>
+          <% } %>
+        </div>
+      </div>
+      <div class="digest-card-status">
+        <%- include('job-status', { 
+          jobId: digest.jobId || digest.id, 
+          status: digest.status || 'PENDING',
+          progress: digest.progress || 0,
+          showProgress: false,
+          autoRefresh: digest.status === 'RUNNING' || digest.status === 'PENDING'
+        }) %>
+      </div>
+    </div>
+    
+    <% if (digest.summary || digest.description) { %>
+      <div class="digest-card-content">
+        <p class="digest-card-description">
+          <%= digest.summary || digest.description || 'No description available' %>
+        </p>
+      </div>
+    <% } %>
+    
+    <% if (digest.stats) { %>
+      <div class="digest-card-stats">
+        <div class="stat-grid stat-grid--compact">
+          <% if (digest.stats.pullRequests !== undefined) { %>
+            <div class="stat-item">
+              <span class="stat-value"><%= digest.stats.pullRequests %></span>
+              <span class="stat-label">PRs</span>
+            </div>
+          <% } %>
+          <% if (digest.stats.issues !== undefined) { %>
+            <div class="stat-item">
+              <span class="stat-value"><%= digest.stats.issues %></span>
+              <span class="stat-label">Issues</span>
+            </div>
+          <% } %>
+          <% if (digest.stats.commits !== undefined) { %>
+            <div class="stat-item">
+              <span class="stat-value"><%= digest.stats.commits %></span>
+              <span class="stat-label">Commits</span>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+    
+    <% if (showActions) { %>
+      <div class="digest-card-actions">
+        <div class="digest-actions-links">
+          <% if (digest.status === 'COMPLETED') { %>
+            <a href="/digests/<%= digest.id %>">View</a>
+          <% } %>
+          
+          <% if (digest.status === 'COMPLETED' || digest.status === 'FAILED') { %>
+            <a href="#" 
+               hx-post="/api/v1/digests/<%= digest.id %>/regenerate"
+               hx-target="closest .digest-card"
+               hx-swap="outerHTML"
+               hx-confirm="Regenerate this digest?">Regenerate</a>
+          <% } %>
+          
+          <a href="#"
+             style="color: #ef4444;"
+             hx-delete="/api/v1/digests/<%= digest.id %>"
+             hx-target="closest .digest-card"
+             hx-swap="outerHTML"
+             hx-confirm="Are you sure you want to delete this digest?">Delete</a>
+        </div>
+      </div>
+    <% } %>
+  </div>
+<% } else { %>
+  <!-- Empty State -->
+  <div class="digest-card digest-card--empty">
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <h3 class="empty-state-title">No digest data</h3>
+      <p class="empty-state-description">
+        Unable to load digest information
+      </p>
+    </div>
+  </div>
+<% } %>

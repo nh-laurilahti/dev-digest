@@ -1,0 +1,179 @@
+<!-- Back Navigation -->
+<section class="breadcrumb-section">
+    <div class="container">
+        <nav aria-label="Breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="/archive" class="breadcrumb-link">← Archive</a>
+                </li>
+                <li class="breadcrumb-item breadcrumb-item--current" aria-current="page">
+                    Digest
+                </li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<!-- Digest Header -->
+<section class="digest-header">
+    <div class="container">
+        <div class="glass-container">
+            <div class="digest-header-content">
+                <div class="digest-header-main">
+                    <div class="digest-status-wrapper">
+                        <span id="digestStatus" class="status-badge status-loading">
+                            Loading...
+                        </span>
+                    </div>
+                    <h1 id="digestTitle" class="digest-title">
+                        Loading digest...
+                    </h1>
+                    <div class="digest-meta">
+                        <div class="digest-meta-item">
+                            <span class="meta-label">Repository</span>
+                            <span id="digestRepo" class="meta-value">-</span>
+                        </div>
+                        <div class="digest-meta-item">
+                            <span class="meta-label">Date Range</span>
+                            <span id="digestDateRange" class="meta-value">-</span>
+                        </div>
+                        <div class="digest-meta-item">
+                            <span class="meta-label">Generated</span>
+                            <span id="digestCreated" class="meta-value">-</span>
+                        </div>
+                        <div class="digest-meta-item">
+                            <span class="meta-label">Pull Requests</span>
+                            <span id="digestPrCount" class="meta-value">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="digest-header-actions">
+                    <!-- Summary Type Toggle -->
+                    <div class="summary-toggle" id="summaryToggle" style="display: none;">
+                        <button class="toggle-btn toggle-btn--active" data-summary-type="original">
+                            Technical
+                        </button>
+                        <button class="toggle-btn" data-summary-type="narrative">
+                            Narrative
+                        </button>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn--secondary dropdown-toggle" id="exportButton" aria-expanded="false">
+                            Export
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu--right" id="export-menu">
+                            <button class="dropdown-item" data-export="markdown">
+                                <span class="dropdown-icon">📝</span>
+                                Markdown (.md)
+                            </button>
+                            <button class="dropdown-item" data-export="html">
+                                <span class="dropdown-icon">🌐</span>
+                                HTML (.html)
+                            </button>
+                            <button class="dropdown-item" data-export="json">
+                                <span class="dropdown-icon">📋</span>
+                                JSON (.json)
+                            </button>
+                        </div>
+                    </div>
+                    <button id="regenerateButton" class="btn btn--primary" style="display: none;">
+                        Regenerate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Digest Statistics -->
+<section class="digest-stats" id="digestStats" style="display: none;">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="glass-container glass-container--subtle">
+                <div class="stat-card">
+                    <div class="stat-value" id="statPRs">-</div>
+                    <div class="stat-label">Pull Requests</div>
+                </div>
+            </div>
+            <div class="glass-container glass-container--subtle">
+                <div class="stat-card">
+                    <div class="stat-value" id="statMerged">-</div>
+                    <div class="stat-label">Merged</div>
+                </div>
+            </div>
+            <div class="glass-container glass-container--subtle">
+                <div class="stat-card">
+                    <div class="stat-value" id="statContributors">-</div>
+                    <div class="stat-label">Contributors</div>
+                </div>
+            </div>
+            <div class="glass-container glass-container--subtle">
+                <div class="stat-card">
+                    <div class="stat-value" id="statAdditions">-</div>
+                    <div class="stat-label">Lines Added</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Digest Content -->
+<section class="digest-content">
+    <div class="container">
+        <div class="digest-content-wrapper">
+            <!-- Table of Contents -->
+            <aside class="digest-toc" id="digestTOC" style="display: none;">
+                <div class="glass-container glass-container--subtle">
+                    <div class="toc-header">
+                        <h3 class="toc-title">Contents</h3>
+                    </div>
+                    <nav class="toc-nav">
+                        <!-- TOC items will be populated by JavaScript -->
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <div class="digest-content-main">
+                <div class="glass-container">
+                    <div class="digest-content-inner">
+                        <!-- Loading State -->
+                        <div id="digestLoading" class="digest-loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading digest content...</p>
+                        </div>
+
+                        <!-- Error State -->
+                        <div id="digestError" class="digest-error" style="display: none;">
+                            <div class="error-icon">❌</div>
+                            <h3 class="error-title">Failed to Load Digest</h3>
+                            <p class="error-message">Unable to load the digest content. Please try again.</p>
+                            <button class="btn btn--primary" onclick="loadDigest()">
+                                Retry
+                            </button>
+                        </div>
+
+                        <!-- Digest Markdown Content (Technical) -->
+                        <div id="digestMarkdown" class="digest-markdown" style="display: none;">
+                            <!-- Markdown content will be rendered here -->
+                        </div>
+
+                        <!-- Narrative Summary Content -->
+                        <div id="digestNarrative" class="digest-narrative" style="display: none;">
+                            <div class="narrative-header">
+                                <h2 class="narrative-title">Narrative Summary</h2>
+                                <p class="narrative-subtitle">AI-generated narrative summary in your chosen style</p>
+                            </div>
+                            <div class="narrative-content">
+                                <!-- Narrative content will be rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

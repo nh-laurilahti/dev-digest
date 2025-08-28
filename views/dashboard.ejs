@@ -1,0 +1,11 @@
+<% const title = 'Dashboard' %>
+<% const description = 'Generate personalized developer newsletters from your GitHub repositories.' %>
+<% const bodyClass = 'dashboard-page' %>
+
+<%- include('layouts/base', {
+    title,
+    description,
+    bodyClass,
+    currentPage: 'dashboard',
+    body: include('partials/dashboard-content')
+}) %>

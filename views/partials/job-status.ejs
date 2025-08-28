@@ -1,0 +1,70 @@
+<%# 
+  Job Status Component - Shows job status with real-time polling
+  Props:
+  - jobId: string - The job ID to poll
+  - status: string - Current job status (PENDING, RUNNING, COMPLETED, FAILED, CANCELLED)
+  - progress: number - Progress percentage (0-100)
+  - showProgress: boolean - Whether to show progress bar
+  - autoRefresh: boolean - Whether to auto-refresh this component
+  - onComplete: string - URL to redirect to when job completes
+%>
+
+<% 
+  const jobId = locals.jobId;
+  const status = locals.status || 'PENDING';
+  const progress = locals.progress || 0;
+  const showProgress = locals.showProgress !== false;
+  const autoRefresh = locals.autoRefresh !== false;
+  const onComplete = locals.onComplete;
+  const refreshInterval = locals.refreshInterval || 3000; // 3 seconds
+%>
+
+<div class="job-status-container" 
+     id="job-<%= jobId %>"
+     <% if (autoRefresh && (status === 'PENDING' || status === 'RUNNING')) { %>
+       hx-get="/api/v1/jobs/<%= jobId %>"
+       hx-trigger="every <%= refreshInterval %>ms"
+       hx-target="#job-<%= jobId %>"
+       hx-swap="outerHTML"
+       hx-headers='{"Accept": "text/html"}'
+     <% } %>
+     data-job-id="<%= jobId %>"
+     data-status="<%= status %>"
+     data-on-complete="<%= onComplete || '' %>">
+     
+  <!-- Job Status Badge -->
+  <div class="job-status job-status--<%= status.toLowerCase() %>">
+    <span class="job-status-icon"></span>
+    <span class="job-status-text"><%= status %></span>
+  </div>
+  
+  <% if (showProgress && (status === 'RUNNING' || status === 'COMPLETED')) { %>
+    <!-- Progress Bar -->
+    <div class="progress progress--sm" style="margin-top: var(--space-2);">
+      <div class="progress-bg">
+        <div class="progress-bar progress-bar--<%= status === 'COMPLETED' ? 'success' : 'primary' %>" 
+             style="width: <%= progress %>%"
+             data-progress="<%= progress %>">
+        </div>
+      </div>
+      <span class="progress-text"><%= Math.round(progress) %>%</span>
+    </div>
+  <% } %>
+  
+  <% if (status === 'FAILED') { %>
+    <!-- Error Information -->
+    <div class="alert alert--error alert--sm" style="margin-top: var(--space-2);">
+      <span class="alert-icon">❌</span>
+      <span class="alert-message">Job failed. Please try again.</span>
+    </div>
+  <% } %>
+</div>
+
+<% if (status === 'COMPLETED' && onComplete) { %>
+  <script>
+    // Redirect when job completes
+    setTimeout(function() {
+      window.location.href = '<%= onComplete %>';
+    }, 1000);
+  </script>
+<% } %>

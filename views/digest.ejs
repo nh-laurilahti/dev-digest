@@ -1,0 +1,962 @@
+<% const title = 'Digest View' %>
+<% const description = 'View and export your generated developer digest' %>
+<% const bodyClass = 'digest-page' %>
+
+<%- include('layouts/base', {
+    title,
+    description,
+    bodyClass,
+    currentPage: 'archive',
+    body: include('partials/digest-content'),
+    additionalScripts: `
+        <!-- Marked.js for markdown parsing -->
+        <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"></script>
+    `,
+    pageScripts: `
+        // User data
+        window.user = ${typeof user !== 'undefined' && user ? JSON.stringify(user) : '{}'};
+        
+        // Digest ID from URL
+        const digestId = window.location.pathname.split('/').pop();
+        let digestData = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDigest();
+            initDropdowns();
+            initExport();
+        });
+        
+        // Load digest data
+        async function loadDigest() {
+            try {
+                showLoading();
+                
+                const response = await fetch('/api/v1/digests/' + digestId, {
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('accessToken') || ''),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                }
+                
+                const data = await response.json();
+                digestData = data.data;
+                
+                renderDigest(digestData);
+                
+            } catch (error) {
+                console.error('Failed to load digest:', error);
+                showError(error.message || 'Unknown error occurred');
+            }
+        }
+        
+        // Render digest data
+        function renderDigest(digest) {
+            // Update header
+            document.getElementById('digestTitle').textContent = 
+                'Digest for ' + digest.repo.name || 'Untitled Digest';
+            
+            document.getElementById('digestRepo').textContent = digest.repo.path;
+            
+            const dateFrom = new Date(digest.dateFrom).toLocaleDateString();
+            const dateTo = new Date(digest.dateTo).toLocaleDateString();
+            document.getElementById('digestDateRange').textContent = dateFrom + ' - ' + dateTo;
+            
+            const createdAt = new Date(digest.createdAt);
+            document.getElementById('digestCreated').textContent = 
+                createdAt.toLocaleDateString() + ' at ' + 
+                createdAt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+            
+            // Update status
+            const statusElement = document.getElementById('digestStatus');
+            const lastJob = digest.jobs && digest.jobs[0];
+            let effectiveStatus = 'UNKNOWN';
+
+            // Prefer actual digest content over job history
+            if (digest.summaryHtml || digest.summaryMarkdown) {
+                effectiveStatus = 'COMPLETED';
+            } else if (lastJob) {
+                effectiveStatus = lastJob.status;
+            }
+
+            const computedClass = 'status-' + (effectiveStatus || 'unknown').toLowerCase();
+            statusElement.className = 'status-badge ' + computedClass;
+            statusElement.textContent = effectiveStatus;
+            
+            // Show regenerate button if completed or failed
+            if (effectiveStatus === 'COMPLETED' || effectiveStatus === 'FAILED') {
+                document.getElementById('regenerateButton').style.display = 'inline-flex';
+            }
+            
+            // Update statistics
+            if (digest.stats && Object.keys(digest.stats).length > 0) {
+                document.getElementById('statPRs').textContent = digest.stats.totalPRs || 0;
+                document.getElementById('statMerged').textContent = digest.stats.mergedPRs || 0;
+                document.getElementById('statContributors').textContent = digest.stats.contributors || 0;
+                document.getElementById('statAdditions').textContent = 
+                    digest.stats.totalAdditions ? formatNumber(digest.stats.totalAdditions) : 0;
+                
+                document.getElementById('digestStats').style.display = 'block';
+            }
+            
+            // Update PR count in header
+            document.getElementById('digestPrCount').textContent = 
+                digest.stats?.totalPRs || digest.prData?.length || 0;
+            
+            // Render content - handle both technical and narrative summaries
+            renderContent(digest);
+            
+            // Setup summary toggle if both types exist
+            setupSummaryToggle(digest);
+            
+            hideLoading();
+        }
+        
+        // Render digest content (technical and/or narrative)
+        function renderContent(digest) {
+            // Render technical content
+            if (digest.summaryHtml) {
+                // Extract the full content section from provided HTML digest
+                try {
+                    const temp = document.createElement('div');
+                    temp.innerHTML = digest.summaryHtml;
+                    const contentEl = temp.querySelector('.content');
+                    const content = contentEl ? contentEl.innerHTML : temp.innerHTML;
+                    document.getElementById('digestMarkdown').innerHTML = content ? content : '<p class="text-secondary">No content available for this digest.</p>';
+                } catch (e) {
+                    console.error('Failed to render HTML content fallback:', e);
+                    document.getElementById('digestMarkdown').innerHTML = '<p class="text-secondary">No content available for this digest.</p>';
+                }
+            } else if (digest.summaryMarkdown) {
+                // Fallback to markdown content
+                try {
+                    if (window.marked && typeof marked.parse === 'function') {
+                        const markdownContent = marked.parse(digest.summaryMarkdown);
+                        document.getElementById('digestMarkdown').innerHTML = markdownContent;
+                    } else {
+                        // Fallback: render as plain text paragraph if marked is unavailable
+                        const escaped = digest.summaryMarkdown
+                          .replace(/&/g, '&amp;')
+                          .replace(/</g, '&lt;')
+                          .replace(/>/g, '&gt;');
+                        document.getElementById('digestMarkdown').innerHTML = '<p>' + escaped + '</p>';
+                    }
+                } catch (e) {
+                    console.error('Failed to render markdown, falling back to plain text:', e);
+                    const escaped = digest.summaryMarkdown
+                      .replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;');
+                    document.getElementById('digestMarkdown').innerHTML = '<p>' + escaped + '</p>';
+                }
+            } else {
+                document.getElementById('digestMarkdown').innerHTML = 
+                    '<p class="text-secondary">No technical content available for this digest.</p>';
+            }
+            
+            // Render narrative content if available
+            if (digest.narrativeSummary) {
+                try {
+                    const narrativeContent = digest.narrativeSummary
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/\\n/g, '<br>');
+                    
+                    document.querySelector('#digestNarrative .narrative-content').innerHTML = 
+                        '<p>' + narrativeContent.split('\\n\\n').join('</p><p>') + '</p>';
+                } catch (e) {
+                    console.error('Failed to render narrative content:', e);
+                    document.querySelector('#digestNarrative .narrative-content').innerHTML = 
+                        '<p class="text-secondary">Failed to load narrative summary.</p>';
+                }
+            } else {
+                document.querySelector('#digestNarrative .narrative-content').innerHTML = 
+                    '<p class="text-secondary">No narrative summary available for this digest.</p>';
+            }
+        }
+        
+        // Setup summary toggle functionality
+        function setupSummaryToggle(digest) {
+            const hasNarrative = digest.narrativeSummary && digest.narrativeSummary.trim();
+            const hasTechnical = digest.summaryHtml || digest.summaryMarkdown;
+
+            const toggle = document.getElementById('summaryToggle');
+            const techBtn = document.querySelector('[data-summary-type="original"]');
+            const narrBtn = document.querySelector('[data-summary-type="narrative"]');
+
+            // Hide toggle only if both are missing
+            if (!hasNarrative && !hasTechnical) {
+                toggle.style.display = 'none';
+                showTechnicalSummary();
+                return;
+            }
+
+            // Show toggle always
+            toggle.style.display = 'flex';
+
+            // Disable missing view buttons
+            if (!hasTechnical && techBtn) {
+                techBtn.setAttribute('disabled', 'true');
+                techBtn.classList.add('toggle-btn--disabled');
+            }
+            if (!hasNarrative && narrBtn) {
+                narrBtn.setAttribute('disabled', 'true');
+                narrBtn.classList.add('toggle-btn--disabled');
+            }
+
+            // Initialize default view: narrative preferred
+            const initialType = hasNarrative ? 'narrative' : 'original';
+            switchSummaryView(initialType);
+
+            // Add event listeners
+            document.querySelectorAll('[data-summary-type]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const button = e.currentTarget;
+                    const summaryType = button && button.dataset ? button.dataset.summaryType : null;
+                    if (!summaryType) return;
+                    // Ignore clicks on disabled buttons
+                    if (button.hasAttribute('disabled')) return;
+                    switchSummaryView(summaryType);
+                });
+            });
+        }
+        
+        // Switch between summary views
+        function switchSummaryView(type) {
+            // Update toggle buttons
+            document.querySelectorAll('[data-summary-type]').forEach(btn => {
+                btn.classList.toggle('toggle-btn--active', btn.dataset.summaryType === type);
+            });
+            
+            if (type === 'narrative') {
+                showNarrativeSummary();
+            } else {
+                showTechnicalSummary();
+            }
+        }
+        
+        // Show technical summary
+        function showTechnicalSummary() {
+            document.getElementById('digestMarkdown').style.display = 'block';
+            document.getElementById('digestNarrative').style.display = 'none';
+            generateTOC(); // Regenerate TOC for technical content
+        }
+        
+        // Show narrative summary
+        function showNarrativeSummary() {
+            document.getElementById('digestMarkdown').style.display = 'none';
+            document.getElementById('digestNarrative').style.display = 'block';
+            generateTOCForNarrative(); // Generate TOC for narrative content
+        }
+        
+        // Generate TOC for narrative content
+        function generateTOCForNarrative() {
+            const headers = document.querySelectorAll('#digestNarrative h1, #digestNarrative h2, #digestNarrative h3');
+            if (headers.length === 0) {
+                document.getElementById('digestTOC').style.display = 'none';
+                return;
+            }
+            
+            const tocNav = document.querySelector('.toc-nav');
+            const tocItems = [];
+            
+            headers.forEach((header, index) => {
+                const id = 'narrative-heading-' + index;
+                header.id = id;
+                
+                const level = parseInt(header.tagName.charAt(1));
+                const text = header.textContent;
+                
+                tocItems.push(
+                    '<a href="#' + id + '" class="toc-item toc-item--level-' + level + '">' +
+                        text +
+                    '</a>'
+                );
+            });
+            
+            tocNav.innerHTML = tocItems.join('');
+            document.getElementById('digestTOC').style.display = 'block';
+            
+            // Smooth scroll for TOC links
+            document.querySelectorAll('.toc-item').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = document.querySelector(link.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        }
+        
+        // Generate table of contents
+        function generateTOC() {
+            const headers = document.querySelectorAll('#digestMarkdown h1, #digestMarkdown h2, #digestMarkdown h3');
+            if (headers.length === 0) return;
+            
+            const tocNav = document.querySelector('.toc-nav');
+            const tocItems = [];
+            
+            headers.forEach((header, index) => {
+                const id = 'heading-' + index;
+                header.id = id;
+                
+                const level = parseInt(header.tagName.charAt(1));
+                const text = header.textContent;
+                
+                tocItems.push(
+                    '<a href="#' + id + '" class="toc-item toc-item--level-' + level + '">' +
+                        text +
+                    '</a>'
+                );
+            });
+            
+            tocNav.innerHTML = tocItems.join('');
+            document.getElementById('digestTOC').style.display = 'block';
+            
+            // Smooth scroll for TOC links
+            document.querySelectorAll('.toc-item').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = document.querySelector(link.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        }
+        
+        // Initialize export functionality
+        function initExport() {
+            document.addEventListener('click', async function(e) {
+                if (e.target.matches('[data-export]')) {
+                    const format = e.target.dataset.export;
+                    await exportDigest(format);
+                }
+            });
+            
+            // Regenerate button
+            document.getElementById('regenerateButton').addEventListener('click', regenerateDigest);
+        }
+        
+        // Export digest
+        async function exportDigest(format) {
+            try {
+                const response = await fetch('/api/v1/digests/' + digestId + '/export?format=' + format, {
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('accessToken') || '')
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Export failed');
+                
+                // Create download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'digest-' + digestId + '.' + format;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('Failed to export digest. Please try again.');
+            }
+        }
+        
+        // Regenerate digest
+        async function regenerateDigest() {
+            if (!confirm('Are you sure you want to regenerate this digest? This will create a new version.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/v1/digests/' + digestId + '/regenerate', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + (localStorage.getItem('accessToken') || ''),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Regeneration failed');
+                
+                const data = await response.json();
+                if (data.data.job?.id) {
+                    window.location.href = '/api/jobs/' + data.data.job.id;
+                } else {
+                    // Reload the page to show updated status
+                    window.location.reload();
+                }
+                
+            } catch (error) {
+                console.error('Regeneration failed:', error);
+                alert('Failed to regenerate digest. Please try again.');
+            }
+        }
+        
+        // Show loading state
+        function showLoading() {
+            document.getElementById('digestLoading').style.display = 'block';
+            document.getElementById('digestError').style.display = 'none';
+            document.getElementById('digestMarkdown').style.display = 'none';
+        }
+        
+        // Hide loading state
+        function hideLoading() {
+            document.getElementById('digestLoading').style.display = 'none';
+        }
+        
+        // Show error state
+        function showError(message) {
+            document.getElementById('digestLoading').style.display = 'none';
+            document.getElementById('digestError').style.display = 'block';
+            document.getElementById('digestMarkdown').style.display = 'none';
+            
+            document.querySelector('#digestError .error-message').textContent = message;
+        }
+        
+        // Utility functions
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+        
+        // Initialize dropdown functionality
+        function initDropdowns() {
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdown = this.closest('.dropdown');
+                    const menu = dropdown.querySelector('.dropdown-menu');
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    
+                    // Close other dropdowns
+                    document.querySelectorAll('.dropdown-menu').forEach(otherMenu => {
+                        if (otherMenu !== menu) {
+                            otherMenu.classList.remove('dropdown-menu--open');
+                            otherMenu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    
+                    this.setAttribute('aria-expanded', !isExpanded);
+                    menu.classList.toggle('dropdown-menu--open', !isExpanded);
+                });
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('dropdown-menu--open');
+                        menu.closest('.dropdown').querySelector('.dropdown-toggle').setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        }
+    `,
+    additionalHead: `
+        <style>
+        /* Digest-specific styles */
+        .digest-page {
+            background: var(--color-bg-primary);
+        }
+
+        .breadcrumb-section {
+            padding: var(--space-4) 0;
+        }
+
+        .breadcrumb {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .breadcrumb-item {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+        }
+
+        .breadcrumb-link {
+            color: var(--color-brand-amber);
+            text-decoration: none;
+            transition: color var(--duration-fast) var(--ease-out);
+        }
+
+        .breadcrumb-link:hover {
+            color: var(--color-brand-amber-light);
+        }
+
+        .breadcrumb-item--current {
+            color: var(--color-text-primary);
+            font-weight: var(--font-weight-medium);
+        }
+
+        .digest-header {
+            padding: var(--space-6) 0;
+        }
+
+        .digest-header-content {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: var(--space-8);
+            padding: var(--space-8);
+        }
+
+        .digest-header-main {
+            flex: 1;
+        }
+
+        .digest-status-wrapper {
+            margin-bottom: var(--space-3);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-completed {
+            background-color: var(--color-success-bg);
+            color: var(--color-success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-pending, .status-running {
+            background-color: var(--color-warning-bg);
+            color: var(--color-warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-failed {
+            background-color: var(--color-error-bg);
+            color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-loading, .status-unknown {
+            background-color: rgba(156, 163, 175, 0.1);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        .digest-title {
+            margin: 0 0 var(--space-4) 0;
+            color: var(--color-text-primary);
+        }
+
+        .digest-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-6);
+        }
+
+        .digest-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+
+        .meta-label {
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .meta-value {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--color-text-primary);
+        }
+
+        .digest-header-actions {
+            display: flex;
+            gap: var(--space-3);
+            flex-shrink: 0;
+        }
+
+        .digest-stats {
+            padding: 0 0 var(--space-8) 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .stat-card {
+            padding: var(--space-6);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: var(--font-size-2xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-brand-amber);
+            margin-bottom: var(--space-2);
+        }
+
+        .stat-label {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .digest-content {
+            padding: 0 0 var(--space-12) 0;
+        }
+
+        .digest-content-wrapper {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: var(--space-8);
+            align-items: start;
+        }
+
+        .digest-toc {
+            position: sticky;
+            top: var(--space-8);
+        }
+
+        .toc-header {
+            padding: var(--space-4) var(--space-4) 0 var(--space-4);
+        }
+
+        .toc-title {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-primary);
+            margin: 0;
+        }
+
+        .toc-nav {
+            padding: var(--space-4);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+        }
+
+        .toc-item {
+            display: block;
+            padding: var(--space-2) var(--space-3);
+            font-size: var(--font-size-xs);
+            color: var(--color-text-tertiary);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: all var(--duration-fast) var(--ease-out);
+        }
+
+        .toc-item:hover {
+            color: var(--color-text-primary);
+            background-color: rgba(255, 243, 224, 0.05);
+        }
+
+        .toc-item--level-2 {
+            margin-left: var(--space-3);
+        }
+
+        .toc-item--level-3 {
+            margin-left: var(--space-6);
+        }
+
+        .digest-content-inner {
+            padding: var(--space-8);
+        }
+
+        .digest-loading, .digest-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--space-12);
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-border-subtle);
+            border-top: 3px solid var(--color-brand-amber);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: var(--space-4);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-icon {
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--space-4);
+        }
+
+        .error-title {
+            color: var(--color-text-primary);
+            margin-bottom: var(--space-3);
+        }
+
+        .error-message {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-6);
+        }
+
+        .digest-markdown {
+            line-height: var(--line-height-relaxed);
+        }
+
+        .digest-markdown h1,
+        .digest-markdown h2,
+        .digest-markdown h3,
+        .digest-markdown h4,
+        .digest-markdown h5,
+        .digest-markdown h6 {
+            margin-top: var(--space-8);
+            margin-bottom: var(--space-4);
+        }
+
+        .digest-markdown h1:first-child,
+        .digest-markdown h2:first-child,
+        .digest-markdown h3:first-child {
+            margin-top: 0;
+        }
+
+        .digest-markdown p {
+            margin-bottom: var(--space-4);
+        }
+
+        .digest-markdown ul,
+        .digest-markdown ol {
+            margin-bottom: var(--space-4);
+            padding-left: var(--space-6);
+        }
+
+        .digest-markdown li {
+            margin-bottom: var(--space-2);
+        }
+
+        .digest-markdown blockquote {
+            border-left: 4px solid var(--color-brand-amber);
+            background-color: rgba(245, 158, 11, 0.05);
+            padding: var(--space-4) var(--space-6);
+            margin: var(--space-4) 0;
+            border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+        }
+
+        .digest-markdown code {
+            background-color: var(--color-bg-tertiary);
+            color: var(--color-brand-amber-light);
+            padding: 0.125rem 0.375rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.875em;
+        }
+
+        .digest-markdown pre {
+            background-color: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            overflow-x: auto;
+            margin: var(--space-4) 0;
+        }
+
+        .digest-markdown pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--color-text-primary);
+        }
+
+        /* HTML Digest Content Styles */
+        .digest-markdown .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-4);
+            margin: var(--space-6) 0;
+        }
+
+        .digest-markdown .stat-card {
+            background: var(--color-bg-secondary);
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            text-align: center;
+            border: 1px solid var(--color-border-subtle);
+        }
+
+        .digest-markdown .stat-value {
+            font-size: var(--font-size-xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--color-brand-amber);
+            margin-bottom: var(--space-1);
+        }
+
+        .digest-markdown .stat-label {
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .digest-markdown .change-entry {
+            background: var(--color-bg-secondary);
+            border-left: 4px solid var(--color-brand-amber);
+            padding: var(--space-6);
+            margin: var(--space-4) 0;
+            border-radius: var(--radius-lg);
+        }
+
+        .digest-markdown .change-entry.ongoing {
+            border-left-color: var(--color-warning);
+            background: rgba(245, 158, 11, 0.05);
+        }
+
+        .digest-markdown .change-entry.high-impact {
+            border-left-color: var(--color-error);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .digest-markdown .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--space-3);
+        }
+
+        .digest-markdown .entry-title a {
+            color: var(--color-text-primary);
+            text-decoration: none;
+            font-weight: var(--font-weight-medium);
+            border-bottom: 2px solid transparent;
+            transition: border-color var(--duration-fast) var(--ease-out);
+        }
+
+        .digest-markdown .entry-title a:hover {
+            border-bottom-color: var(--color-brand-amber);
+        }
+
+        .digest-markdown .significance-badge {
+            background: var(--color-brand-amber);
+            color: white;
+            padding: var(--space-1) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: var(--font-weight-medium);
+            text-transform: uppercase;
+        }
+
+        .digest-markdown .significance-badge.high {
+            background: var(--color-error);
+        }
+
+        .digest-markdown .significance-badge.medium {
+            background: var(--color-warning);
+        }
+
+        .digest-markdown .significance-badge.low {
+            background: var(--color-success);
+        }
+
+        .digest-markdown .entry-meta {
+            display: flex;
+            gap: var(--space-4);
+            color: var(--color-text-secondary);
+            font-size: var(--font-size-sm);
+            margin: var(--space-2) 0;
+        }
+
+        .digest-markdown .labels {
+            display: flex;
+            gap: var(--space-2);
+            flex-wrap: wrap;
+            margin-top: var(--space-2);
+        }
+
+        .digest-markdown .label {
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-tertiary);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-xs);
+        }
+
+        .digest-markdown .summary-text {
+            margin: var(--space-2) 0;
+            color: var(--color-text-secondary);
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .digest-content-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .digest-toc {
+                position: static;
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .digest-header-content {
+                flex-direction: column;
+                gap: var(--space-6);
+            }
+
+            .digest-header-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .digest-header-actions .btn,
+            .digest-header-actions .dropdown {
+                flex: 1;
+            }
+
+            .digest-meta {
+                flex-direction: column;
+                gap: var(--space-3);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .digest-header-actions {
+                flex-direction: column;
+            }
+        }
+        </style>
+    `
+}) %>
