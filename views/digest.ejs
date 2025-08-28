@@ -160,18 +160,25 @@
             // Render narrative content if available
             if (digest.narrativeSummary) {
                 try {
-                    const narrativeContent = digest.narrativeSummary
+                    // Use the same markdown rendering approach as technical summary
+                    if (window.marked && typeof marked.parse === 'function') {
+                        const narrativeContent = marked.parse(digest.narrativeSummary);
+                        document.querySelector('#digestNarrative .narrative-content').innerHTML = narrativeContent;
+                    } else {
+                        // Fallback: render as plain text if marked is unavailable
+                        const escaped = digest.narrativeSummary
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;');
+                        document.querySelector('#digestNarrative .narrative-content').innerHTML = '<p>' + escaped + '</p>';
+                    }
+                } catch (e) {
+                    console.error('Failed to render narrative content, falling back to plain text:', e);
+                    const escaped = digest.narrativeSummary
                         .replace(/&/g, '&amp;')
                         .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;')
-                        .replace(/\\n/g, '<br>');
-                    
-                    document.querySelector('#digestNarrative .narrative-content').innerHTML = 
-                        '<p>' + narrativeContent.split('\\n\\n').join('</p><p>') + '</p>';
-                } catch (e) {
-                    console.error('Failed to render narrative content:', e);
-                    document.querySelector('#digestNarrative .narrative-content').innerHTML = 
-                        '<p class="text-secondary">Failed to load narrative summary.</p>';
+                        .replace(/>/g, '&gt;');
+                    document.querySelector('#digestNarrative .narrative-content').innerHTML = '<p>' + escaped + '</p>';
                 }
             } else {
                 document.querySelector('#digestNarrative .narrative-content').innerHTML = 
