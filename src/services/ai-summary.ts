@@ -760,32 +760,43 @@ Provide a 2-3 sentence technical summary focusing on the change's significance, 
       name: 'Concise Technical',
       style: 'concise',
       description: 'Brief, structured technical summary with clear sections for sidebar navigation',
-      systemPrompt: 'You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical report. Focus on actual repository activity and concrete changes. Always create clear subtitles using HTML <h2> headers with appropriate emojis for main sections.',
+      systemPrompt: 'You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical report. Focus on actual repository activity and concrete changes. Always use proper Markdown formatting with ## headers and appropriate emojis for main sections.',
       userPromptTemplate: `Create a concise technical summary of this repository activity:
 
-REPOSITORY: {{repositoryName}}
-PERIOD: {{dateRange}} ({{dayCount}} days)
+**REPOSITORY:** {{repositoryName}}  
+**PERIOD:** {{dateRange}} ({{dayCount}} days)
 
-KEY METRICS:
+**KEY METRICS:**
 - {{totalPRs}} PRs ({{mergedPRs}} merged, {{mergeRate}}% success rate)
-- {{contributorCount}} contributors
+- {{contributorCount}} contributors  
 - {{totalLinesChanged}} lines changed
 - Average merge time: {{avgMergeTime}} hours
 
-TOP CHANGES:
+**TOP CHANGES:**
 {{topChanges}}
 
-WRITING REQUIREMENTS:
-- Write exactly like a technical report about this repository
-- Use HTML <h2> headers with emojis for main sections (e.g., <h2>📈 Development Activity</h2>, <h2>🔧 Key Changes</h2>, <h2>👥 Team Performance</h2>)
-- Use appropriate technical report emojis: 📊 for metrics, 🚀 for deployments, 🐛 for bugs, ⚡ for performance, 🔒 for security, etc.
-- Keep each section 1-2 sentences maximum in <p> tags
-- Focus ONLY on what actually happened in the repository
-- Mention specific PR numbers, contributor names, and technical details
-- No creative storytelling - stick to facts about the codebase
-- Total length: 3-4 short paragraphs maximum
-- Structure: Development overview, notable changes, team metrics
-- Use HTML formatting throughout (no markdown)`,
+## WRITING REQUIREMENTS:
+
+### Structure & Format
+- Write exactly like a **professional technical report** about this repository
+- Use Markdown **## headers with emojis** for main sections:
+  - \`## 📈 Development Activity\`
+  - \`## 🔧 Key Changes\`  
+  - \`## 👥 Team Performance\`
+- Each section should be **1-2 concise paragraphs maximum**
+
+### Content Guidelines
+- Focus **ONLY** on what actually happened in the repository
+- Mention specific **PR numbers** (e.g., \`PR #123\`), **contributor names**, and **technical details**
+- Use appropriate **technical emojis**: 📊 metrics, 🚀 deployments, 🐛 bugs, ⚡ performance, 🔒 security, 🧪 testing, 📝 documentation
+- **No creative storytelling** - stick to facts about the codebase
+- Use **bold text** for important metrics and **code formatting** for technical terms
+
+### Output Specifications
+- **Total length:** 3-4 short paragraphs maximum
+- **Tone:** Professional, factual, concise
+- **Format:** Clean Markdown with proper headers, lists, and emphasis
+- **Structure:** Development overview → notable changes → team metrics`,
       tags: ['technical', 'brief', 'metrics', 'structured'],
     });
 
@@ -793,32 +804,49 @@ WRITING REQUIREMENTS:
       name: 'Frontend Focused',
       style: 'frontend',
       description: 'Technical analysis focused on UI/UX and frontend changes with clear section headers',
-      systemPrompt: 'You are a frontend technical lead writing a digest about UI/UX and frontend development activity. Write like a technical report specifically focused on user-facing changes and frontend architecture. Always use HTML <h2> headers with appropriate emojis for main sections to enable sidebar navigation. Focus on concrete frontend changes in the repository.',
+      systemPrompt: 'You are a frontend technical lead writing a digest about UI/UX and frontend development activity. Write like a technical report specifically focused on user-facing changes and frontend architecture. Always use proper Markdown formatting with ## headers and appropriate emojis for main sections to enable sidebar navigation. Focus on concrete frontend changes in the repository.',
       userPromptTemplate: `Analyze this repository activity from a frontend development perspective:
 
-REPOSITORY: {{repositoryName}}
-PERIOD: {{dateRange}} ({{dayCount}} days)
+**REPOSITORY:** {{repositoryName}}  
+**PERIOD:** {{dateRange}} ({{dayCount}} days)
 
-ACTIVITY SUMMARY:
+**ACTIVITY SUMMARY:**
 - {{totalPRs}} PRs with {{frontendPRs}} likely frontend-related
 - {{contributorCount}} contributors
 - Total changes: {{totalLinesChanged}} lines
 
-TOP FRONTEND CHANGES:
+**TOP FRONTEND CHANGES:**
 {{frontendChanges}}
 
-WRITING REQUIREMENTS:
-- Write like a technical report about frontend/UI changes
-- Use HTML <h2> headers with emojis for sections (e.g., <h2>🎨 UI/UX Updates</h2>, <h2>🏗️ Frontend Architecture</h2>, <h2>✨ User Experience Improvements</h2>)
-- Use frontend-focused emojis: 🎨 for design, 📱 for mobile, 💻 for desktop, 🚀 for performance, ♿ for accessibility, 🎭 for animations, etc.
-- Focus specifically on user-facing changes, component updates, styling modifications in <p> tags
-- Mention specific files, components, or UI elements that were changed
-- Highlight performance improvements, accessibility updates, or design system changes
-- Include actual impact on users and developers
-- Keep technical and factual - no dramatic language
-- Structure: Frontend changes overview, specific UI updates, architecture improvements
-- Total length: 4-5 paragraphs maximum
-- Use HTML formatting throughout (no markdown)`,
+## WRITING REQUIREMENTS:
+
+### Structure & Format
+- Write like a **professional frontend technical report**
+- Use Markdown **## headers with emojis** for main sections:
+  - \`## 🎨 UI/UX Updates\`
+  - \`## 🏗️ Frontend Architecture\`
+  - \`## ✨ User Experience Improvements\`
+  - \`## 🚀 Performance & Optimization\`
+- Each section should be **2-3 focused paragraphs maximum**
+
+### Content Guidelines
+- Focus specifically on **user-facing changes**, component updates, styling modifications
+- Mention specific **files** (\`component.tsx\`), **components**, or **UI elements** that were changed
+- Highlight **performance improvements**, **accessibility updates**, or **design system changes**
+- Include actual **impact on users and developers**
+- Use **frontend-focused emojis**: 🎨 design, 📱 mobile, 💻 desktop, ♿ accessibility, 🎭 animations, 🎯 UX, 🔧 tools, 📦 components
+
+### Technical Details
+- Reference specific **PR numbers** and **contributor names**
+- Use **code formatting** for file names, component names, CSS classes
+- **Bold** important metrics and improvements
+- *Italic* for emphasis on user impact
+
+### Output Specifications
+- **Total length:** 4-5 paragraphs maximum
+- **Tone:** Technical but user-focused, professional
+- **Format:** Clean Markdown with proper headers, code snippets, and emphasis
+- **Structure:** Frontend changes overview → specific UI updates → architecture improvements → performance/accessibility`,
       tags: ['frontend', 'ui', 'ux', 'user-facing', 'technical'],
     });
 
@@ -826,34 +854,52 @@ WRITING REQUIREMENTS:
       name: 'Technical Journal',
       style: 'engaging-story',
       description: 'Engaging but factual technical reporting about repository development activity',
-      systemPrompt: 'You are a technical journalist writing an engaging but factual article about software development activity. Write like a technical report with engaging language covering this repository. Use engaging language but focus entirely on what actually happened in the codebase. Always use HTML <h2> headers with appropriate emojis for main sections. No overly dramatic storytelling - keep it professional and repository-focused.',
+      systemPrompt: 'You are a technical journalist writing an engaging but factual article about software development activity. Write like a technical report with engaging language covering this repository. Use engaging language but focus entirely on what actually happened in the codebase. Always use proper Markdown formatting with ## headers and appropriate emojis for main sections. No overly dramatic storytelling - keep it professional and repository-focused.',
       userPromptTemplate: `Write an engaging technical article about this development period:
 
-REPOSITORY: {{repositoryName}}
-REPORTING PERIOD: {{dateRange}} ({{dayCount}} days)
+**REPOSITORY:** {{repositoryName}}  
+**REPORTING PERIOD:** {{dateRange}} ({{dayCount}} days)
 
-DEVELOPMENT ACTIVITY:
+**DEVELOPMENT ACTIVITY:**
 - {{totalPRs}} pull requests submitted ({{mergedPRs}} merged successfully)
 - {{contributorCount}} developers contributed
 - {{totalLinesChanged}} lines of code changed
 - Top contributors: {{topContributors}}
 
-KEY DEVELOPMENT CHANGES:
+**KEY DEVELOPMENT CHANGES:**
 {{topChanges}}
 
-WRITING REQUIREMENTS:
-- Write like an engaging technical report about software development
-- Use HTML <h2> headers with emojis for sections (e.g., <h2>🚀 Development Highlights</h2>, <h2>💻 Code Changes</h2>, <h2>👥 Team Activity</h2>)
-- Use engaging technical emojis: 🚀 for launches, 💻 for code, 🔬 for research, 🎯 for goals, 🏆 for achievements, ⚡ for improvements, etc.
-- Engaging but professional tone - like TechCrunch or Ars Technica covering this repo
-- Focus on the technical work that was accomplished
-- Mention specific contributors, PR numbers, and code changes in <p> tags
-- Describe the impact of changes on the codebase and users
-- No dramatic storylines - focus on the actual development work
-- Include what challenges were solved and features added
-- Structure: Development overview, major changes, team contributions, impact
-- Total length: 4-6 paragraphs maximum
-- Use HTML formatting throughout (no markdown)`,
+## WRITING REQUIREMENTS:
+
+### Structure & Format
+- Write like an **engaging technical journal** about software development
+- Use Markdown **## headers with emojis** for main sections:
+  - \`## 🚀 Development Highlights\`
+  - \`## 💻 Code Changes & Features\`
+  - \`## 👥 Team Activity & Contributions\`
+  - \`## 🎯 Impact & Achievements\`
+- Each section should be **2-4 engaging paragraphs**
+
+### Content Guidelines  
+- **Engaging but professional tone** - like *TechCrunch* or *Ars Technica* covering this repo
+- Focus on the **technical work that was accomplished**
+- Mention specific **contributors**, **PR numbers** (\`PR #123\`), and **code changes**
+- Describe the **impact of changes** on the codebase and users
+- Include what **challenges were solved** and **features added**
+- **No dramatic storylines** - focus on actual development work
+
+### Technical Storytelling
+- Use **engaging technical emojis**: 🚀 launches, 💻 code, 🔬 research, 🎯 goals, 🏆 achievements, ⚡ improvements, 🧠 innovation, 🔧 fixes, 🌟 features
+- **Bold** key achievements and metrics
+- *Italic* for emphasis on innovation or clever solutions  
+- Use **code formatting** for technical terms, file names, functions
+- Include **bullet points** for key accomplishments
+
+### Output Specifications
+- **Total length:** 4-6 well-structured paragraphs maximum
+- **Tone:** Engaging yet professional, technical journalism style
+- **Format:** Rich Markdown with headers, emphasis, code snippets, and lists
+- **Structure:** Development overview → major changes → team contributions → impact & outcomes`,
       tags: ['technical-journalism', 'engaging', 'factual', 'professional'],
     });
 
@@ -861,38 +907,55 @@ WRITING REQUIREMENTS:
       name: 'Executive Summary',
       style: 'executive',
       description: 'Business-focused summary with clear metrics and strategic insights for leadership',
-      systemPrompt: 'You are writing an executive brief for business leaders and stakeholders. Focus entirely on business outcomes, team productivity, and strategic insights. Use business language, avoid technical jargon. Always use HTML <h2> headers with appropriate business emojis for clear section organization. Present concrete results and actionable insights.',
+      systemPrompt: 'You are writing an executive brief for business leaders and stakeholders. Focus entirely on business outcomes, team productivity, and strategic insights. Use business language, avoid technical jargon. Always use proper Markdown formatting with ## headers and appropriate business emojis for clear section organization. Present concrete results and actionable insights.',
       userPromptTemplate: `Provide an executive summary of development activity:
 
-BUSINESS CONTEXT:
-Repository: {{repositoryName}}
-Reporting Period: {{dateRange}} ({{dayCount}} days)
+**BUSINESS CONTEXT:**
+- Repository: {{repositoryName}}
+- Reporting Period: {{dateRange}} ({{dayCount}} days)
 
-PRODUCTIVITY METRICS:
+**PRODUCTIVITY METRICS:**
 - Development Velocity: {{totalPRs}} changes delivered ({{mergeRate}}% success rate)
 - Team Performance: {{contributorCount}} active contributors
-- Code Quality: {{reviewCoverage}}% review coverage
+- Code Quality: {{reviewCoverage}}% review coverage  
 - Delivery Speed: {{avgMergeTime}} hours average merge time
 
-BUSINESS IMPACT:
+**BUSINESS IMPACT:**
 - Features delivered: {{featureCount}}
 - Issues resolved: {{bugfixCount}}
 - Security/maintenance: {{maintenanceCount}}
 
-WRITING REQUIREMENTS:
-- Write like a business report for executives and stakeholders
-- Use HTML <h2> headers with business emojis for sections (e.g., <h2>📈 Development Performance</h2>, <h2>🎯 Business Deliverables</h2>, <h2>👥 Team Productivity</h2>, <h2>💡 Strategic Recommendations</h2>)
-- Use business-focused emojis: 📊 for metrics, 💰 for cost savings, ⚡ for efficiency, 🎯 for goals, 📈 for growth, 🏆 for achievements, etc.
-- Focus on business value delivered and operational metrics in <p> tags
-- Translate technical activity into business outcomes
-- Mention cost savings, efficiency gains, customer impact where relevant
-- Include quantifiable results and percentage improvements
-- Address any risks or concerns from a business perspective
-- Provide 2-3 strategic recommendations for leadership
-- Use business terminology - "deliverables" not "PRs", "productivity" not "commits"
-- Structure: Performance overview, business value delivered, team efficiency, strategic outlook
-- Total length: 4-5 paragraphs maximum
-- Use HTML formatting throughout (no markdown)`,
+## WRITING REQUIREMENTS:
+
+### Structure & Format
+- Write like a **professional executive business report**
+- Use Markdown **## headers with business emojis** for main sections:
+  - \`## 📈 Development Performance\`
+  - \`## 🎯 Business Deliverables\`
+  - \`## 👥 Team Productivity\`
+  - \`## 💡 Strategic Recommendations\`
+- Each section should be **2-3 executive-focused paragraphs**
+
+### Business Communication Guidelines
+- Focus on **business value delivered** and **operational metrics**
+- Translate technical activity into **business outcomes**
+- Mention **cost savings**, **efficiency gains**, **customer impact** where relevant
+- Include **quantifiable results** and **percentage improvements**
+- Address any **risks or concerns** from a business perspective
+- Provide **2-3 strategic recommendations** for leadership
+
+### Executive Language & Formatting
+- Use **business terminology**: "deliverables" not "PRs", "productivity" not "commits"
+- Use **business-focused emojis**: 📊 metrics, 💰 cost savings, ⚡ efficiency, 🎯 goals, 📈 growth, 🏆 achievements, 🔍 insights, 💼 business impact
+- **Bold** key metrics, achievements, and recommendations
+- *Italic* for strategic emphasis and insights
+- Use **bullet points** for key accomplishments and metrics
+
+### Output Specifications  
+- **Total length:** 4-5 executive-level paragraphs maximum
+- **Tone:** Professional, strategic, business-focused
+- **Format:** Clean Markdown with executive-appropriate formatting
+- **Structure:** Performance overview → business value delivered → team efficiency → strategic outlook & recommendations`,
       tags: ['executive', 'business', 'leadership', 'strategic'],
     });
 
@@ -900,37 +963,56 @@ WRITING REQUIREMENTS:
       name: 'Technical Deep Dive',
       style: 'technical',
       description: 'Comprehensive technical analysis with architectural insights and code quality assessment',
-      systemPrompt: 'You are a senior technical architect writing a detailed analysis for engineering teams. Focus on architectural patterns, code quality metrics, technical challenges, and engineering best practices. Use HTML <h2> headers with appropriate technical emojis for clear organization. Write like a technical lead analyzing the codebase and development patterns.',
+      systemPrompt: 'You are a senior technical architect writing a detailed analysis for engineering teams. Focus on architectural patterns, code quality metrics, technical challenges, and engineering best practices. Use proper Markdown formatting with ## headers and appropriate technical emojis for clear organization. Write like a technical lead analyzing the codebase and development patterns.',
       userPromptTemplate: `Provide a technical deep dive analysis:
 
-TECHNICAL OVERVIEW:
-Repository: {{repositoryName}}
-Analysis Period: {{dateRange}} ({{dayCount}} days)
+**TECHNICAL OVERVIEW:**
+- Repository: {{repositoryName}}
+- Analysis Period: {{dateRange}} ({{dayCount}} days)
 
-CODE ANALYSIS:
+**CODE ANALYSIS:**
 - {{totalPRs}} pull requests with {{totalLinesChanged}} lines changed
 - Complexity distribution: {{complexityBreakdown}}
 - Review coverage: {{reviewCoverage}}%
 - Average merge time: {{avgMergeTime}} hours
 
-DEVELOPMENT ACTIVITY:
+**DEVELOPMENT ACTIVITY:**
 {{topChanges}}
 
-WRITING REQUIREMENTS:
-- Write like a senior technical architect's analysis for engineering teams
-- Use HTML <h2> headers with technical emojis for sections (e.g., <h2>🔍 Code Quality Analysis</h2>, <h2>🏗️ Architectural Changes</h2>, <h2>⚙️ Development Patterns</h2>, <h2>💡 Technical Recommendations</h2>)
-- Use technical emojis: 🔍 for analysis, 🏗️ for architecture, ⚙️ for systems, 🧪 for testing, 📊 for metrics, 🔒 for security, ⚡ for performance, etc.
-- Focus on technical debt, code patterns, and architectural implications in <p> tags
-- Analyze development practices and code review effectiveness
-- Discuss specific technical challenges and how they were addressed
-- Mention testing patterns, refactoring efforts, and performance improvements
-- Include concrete technical recommendations for the engineering team
-- Discuss impact on system architecture and maintainability
-- Analyze complexity trends and code health metrics
-- Address any technical risks and suggest mitigation strategies
-- Structure: Technical overview, architectural analysis, code quality assessment, development practices evaluation, technical recommendations
-- Total length: 5-7 paragraphs with technical depth
-- Use HTML formatting throughout (no markdown)`,
+## WRITING REQUIREMENTS:
+
+### Structure & Format
+- Write like a **senior technical architect's comprehensive analysis** for engineering teams
+- Use Markdown **## headers with technical emojis** for main sections:
+  - \`## 🔍 Code Quality Analysis\`
+  - \`## 🏗️ Architectural Changes & Patterns\`
+  - \`## ⚙️ Development Practices & Workflows\`
+  - \`## 🧪 Testing & Quality Assurance\`
+  - \`## 💡 Technical Recommendations\`
+- Each section should be **3-4 detailed technical paragraphs**
+
+### Technical Analysis Guidelines
+- Focus on **technical debt**, **code patterns**, and **architectural implications**
+- Analyze **development practices** and **code review effectiveness**
+- Discuss specific **technical challenges** and how they were addressed
+- Mention **testing patterns**, **refactoring efforts**, and **performance improvements**
+- Include **concrete technical recommendations** for the engineering team
+- Discuss impact on **system architecture** and **maintainability**
+
+### Deep Technical Content
+- Analyze **complexity trends** and **code health metrics**
+- Address any **technical risks** and suggest **mitigation strategies**
+- Use **advanced technical emojis**: 🔍 analysis, 🏗️ architecture, ⚙️ systems, 🧪 testing, 📊 metrics, 🔒 security, ⚡ performance, 🐛 debugging, 🧠 algorithms, 🔧 tools, 📈 trends
+- **Bold** critical findings and metrics
+- *Italic* for technical insights and patterns
+- Use **code formatting** for function names, file paths, technical terms
+- Include **technical bullet points** and **numbered recommendations**
+
+### Output Specifications
+- **Total length:** 5-7 comprehensive technical paragraphs maximum  
+- **Tone:** Expert-level technical analysis, architect-to-engineer communication
+- **Format:** Rich Markdown with detailed technical formatting
+- **Structure:** Technical overview → architectural analysis → code quality assessment → development practices evaluation → technical recommendations & risk assessment`,
       tags: ['technical', 'architecture', 'engineering', 'analysis'],
     });
 
