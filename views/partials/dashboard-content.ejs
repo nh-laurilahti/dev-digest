@@ -4,7 +4,7 @@
         <div class="hero-content">
             <div class="hero-text">
                 <h1 class="hero-title">
-                    <span class="hero-title-primary">Developer Digest</span>
+                    <span class="hero-title-primary">Developer's Digest</span>
                 </h1>
                 <p class="hero-subtitle">
                     Create a personalized developer newsletter from your GitHub repository activity.
@@ -297,16 +297,18 @@
                                 class="form-textarea prompt-textarea"
                                 rows="8"
                                 placeholder="AI prompt will appear here based on your selected style..."
-                            >You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical news article. Focus on actual repository activity and concrete changes. Always create clear subtitles using ## headers for main sections.
+                            >You are a senior software engineer writing a concise technical digest for developers. Write in a factual, professional tone like a technical report. Focus on actual repository activity and concrete changes. Always create clear subtitles using HTML <h2> headers with appropriate emojis for main sections.
 
 Create a concise technical summary of this repository activity:
-- Write exactly like a technical news article about this repository
-- Use ## headers for main sections (e.g., ## Development Activity, ## Key Changes, ## Team Performance)
-- Keep each section 1-2 sentences maximum
+- Write exactly like a technical report about this repository
+- Use HTML <h2> headers with emojis for main sections (e.g., <h2>📈 Development Activity</h2>, <h2>🔧 Key Changes</h2>, <h2>👥 Team Performance</h2>)
+- Use appropriate technical report emojis: 📊 for metrics, 🚀 for deployments, 🐛 for bugs, ⚡ for performance, 🔒 for security, etc.
+- Keep each section 1-2 sentences maximum in <p> tags
 - Focus ONLY on what actually happened in the repository
 - Mention specific PR numbers, contributor names, and technical details
 - No creative storytelling - stick to facts about the codebase
-- Total length: 3-4 short paragraphs maximum</textarea>
+- Total length: 3-4 short paragraphs maximum
+- Use HTML formatting throughout (no markdown)</textarea>
                             <div class="form-help">
                                 <span class="help-icon">💡</span>
                                 <span class="help-text">

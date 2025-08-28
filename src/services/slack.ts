@@ -222,8 +222,25 @@ export class SlackService {
         message = { ...message, ...processedMessage };
       }
 
+      // Resolve channel name (e.g., "#digest") to channel ID
+      let resolvedChannel = message.channel;
+      if (typeof resolvedChannel === 'string' && resolvedChannel.startsWith('#')) {
+        const channelName = resolvedChannel.slice(1);
+        try {
+          const list = await client.conversations.list({ types: 'public_channel,private_channel', limit: 1000 });
+          const match = (list.channels || []).find((c: any) => c.name === channelName);
+          if (match?.id) {
+            resolvedChannel = match.id;
+          } else {
+            logger.warn({ channelName }, 'Slack channel not found by name; attempting to post using provided value');
+          }
+        } catch (e) {
+          logger.warn({ error: e instanceof Error ? e.message : String(e) }, 'Failed to resolve Slack channel name');
+        }
+      }
+
       const messageArgs: ChatPostMessageArguments = {
-        channel: message.channel,
+        channel: resolvedChannel,
         text: message.text,
         blocks: message.blocks,
         attachments: message.attachments as any,
@@ -240,7 +257,6 @@ export class SlackService {
       };
 
       const result = await client.chat.postMessage(messageArgs);
-
       if (!result.ok) {
         throw new Error(`Slack API error: ${result.error}`);
       }
@@ -249,7 +265,7 @@ export class SlackService {
       let permalink: string | undefined;
       try {
         const permaResult = await client.chat.getPermalink({
-          channel: message.channel,
+          channel: result.channel!,
           message_ts: result.ts!
         });
         if (permaResult.ok) {
@@ -258,48 +274,39 @@ export class SlackService {
       } catch (permaError) {
         logger.warn({
           workspaceId,
-          channel: message.channel,
+          channel: result.channel,
           messageTs: result.ts
         }, 'Failed to get message permalink');
       }
 
       const slackResult: SlackResult = {
         success: true,
-        messageId: result.ts,
-        timestamp: result.ts,
-        channel: result.channel,
+        messageId: result.ts!,
+        timestamp: result.ts as any,
+        channel: result.channel as any,
         permalink
-      };
+      } as any;
 
-      // Log message delivery
-      await this.logSlackMessage(workspaceId, message, slackResult, template);
-
-      logger.info({
-        workspaceId,
-        channel: message.channel,
-        messageId: result.ts
-      }, 'Slack message sent successfully');
+      // Log delivery (best effort)
+      try {
+        await this.logSlackMessage(workspaceId, { ...message, channel: resolvedChannel }, slackResult, template);
+      } catch (logErr) {
+        // already handled inside logSlackMessage
+      }
 
       return slackResult;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      const slackResult: SlackResult = {
-        success: false,
-        error: errorMessage,
-        channel: message.channel
-      };
-
-      // Log failed delivery
-      await this.logSlackMessage(workspaceId, message, slackResult, template);
-
+      const errMsg = error instanceof Error ? error.message : String(error);
       logger.error({
         workspaceId,
         channel: message.channel,
-        error: errorMessage
+        error: errMsg
       }, 'Failed to send Slack message');
 
-      return slackResult;
+      return {
+        success: false,
+        error: errMsg
+      } as any;
     }
   }
 
@@ -480,13 +487,33 @@ export class SlackService {
           template = JSON.parse(templateRecord.content);
           this.templateCache.set(cacheKey, template);
         } else {
-          throw new Error(`Slack template not found: ${templateName}`);
+          // Built-in fallback templates (by normalized key)
+          const builtInKey = templateName.trim().toUpperCase();
+          const builtIn = (SLACK_MESSAGE_TEMPLATES as any)[builtInKey];
+          if (builtIn) {
+            template = JSON.parse(JSON.stringify(builtIn));
+            this.templateCache.set(cacheKey, template);
+          } else {
+            throw new Error(`Slack template not found: ${templateName}`);
+          }
         }
       }
 
       // Process template with data substitution
       const processedTemplate = JSON.parse(JSON.stringify(template));
-      this.substituteTemplateVariables(processedTemplate, data);
+
+      // Normalize common digest fields to expected placeholders
+      const normalizedData = { ...data } as any;
+      if (!normalizedData.summaryText && typeof normalizedData.summary === 'string') {
+        normalizedData.summaryText = normalizedData.summary;
+      }
+      if (normalizedData.stats && typeof normalizedData.prCount === 'undefined') {
+        if (typeof normalizedData.stats.prCount === 'number') normalizedData.prCount = normalizedData.stats.prCount;
+        if (typeof normalizedData.stats.commitCount === 'number') normalizedData.commitCount = normalizedData.stats.commitCount;
+        if (typeof normalizedData.stats.contributorCount === 'number') normalizedData.contributorCount = normalizedData.stats.contributorCount;
+      }
+
+      this.substituteTemplateVariables(processedTemplate, normalizedData);
 
       return processedTemplate;
     } catch (error) {
@@ -496,8 +523,12 @@ export class SlackService {
         error: error instanceof Error ? error.message : String(error)
       }, 'Failed to process Slack template');
 
+      // Minimal text fallback using common digest fields
+      const repoName = data?.repoName || 'Repository';
+      const dateRange = data?.dateRange || '';
+      const digestUrl = data?.digestUrl || '';
       return {
-        text: 'Template processing failed'
+        text: `📊 ${repoName} Digest ${dateRange ? '(' + dateRange + ')' : ''} — ${digestUrl}`
       };
     }
   }

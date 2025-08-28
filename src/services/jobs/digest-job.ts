@@ -698,14 +698,16 @@ Please produce a markdown digest with sections: Overview, Highlights, PRs, Contr
       // Parse stats for template data
       const stats = digest.statsJson ? JSON.parse(digest.statsJson) : {};
       const dateRange = `${digest.dateFrom.toLocaleDateString()} - ${digest.dateTo.toLocaleDateString()}`;
-      const digestUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/digest/${digestId}`;
+      const digestUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/digests/${digestId}`;
       const repoUrl = `https://github.com/${digest.repo.path}`;
 
       // Prepare template data for the notification (matching Slack template structure)
       const templateData = {
         repoName: digest.repo.name || digest.repo.path,
         summaryTitle: `Weekly Digest - ${digest.repo.name}`,
-        summary: digest.summaryMd ? digest.summaryMd.substring(0, 300) + '...' : 'Digest generated successfully',
+        summary: (digest as any).narrativeSummary
+          ? String((digest as any).narrativeSummary).substring(0, 500) + '...'
+          : (digest.summaryMd ? digest.summaryMd.substring(0, 500) + '...' : 'Digest generated successfully'),
         dateRange,
         digestUrl,
         repoUrl,
@@ -856,7 +858,7 @@ Please produce a markdown digest with sections: Overview, Highlights, PRs, Contr
 
       const stats = digest.statsJson ? JSON.parse(digest.statsJson) : {};
       const dateRange = `${digest.dateFrom.toLocaleDateString()} - ${digest.dateTo.toLocaleDateString()}`;
-      const digestUrl = `${config.baseUrl || process.env.BASE_URL || 'http://localhost:3000'}/digest/${digest.id}`;
+      const digestUrl = `${config.baseUrl || process.env.BASE_URL || 'http://localhost:3000'}/digests/${digest.id}`;
       const repoUrl = `https://github.com/${repo.path}`;
 
       // Use the existing notification manager approach

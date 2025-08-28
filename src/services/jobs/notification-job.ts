@@ -69,6 +69,29 @@ export class NotificationJobHandler implements JobHandler {
         };
       }
 
+      // Fast-path: for digest Slack notifications, post directly to settings channel
+      if (params.type === 'slack' && typeof params.digestId === 'number') {
+        const directResult = await this.sendSlackDigestToSettingsChannel(params);
+        // Persist a minimal record into job params for traceability
+        await this.storeJobNotificationRecord(job.id, params, {
+          id: `job_${job.id}_${Date.now()}`,
+          success: directResult.success,
+          deliveries: [{
+            channel: 'slack',
+            recipient: directResult.channel,
+            success: directResult.success,
+            messageId: directResult.messageId || ''
+          }],
+          failedDeliveries: [],
+          totalRecipients: 1,
+          successfulDeliveries: directResult.success ? 1 : 0,
+          failedCount: directResult.success ? 0 : 1,
+          deliveredAt: new Date(),
+          duration: 0
+        });
+        return { success: directResult.success, error: directResult.error };
+      }
+
       if (!this.notificationManager) {
         await this.initializeNotificationManager();
         
@@ -122,41 +145,18 @@ export class NotificationJobHandler implements JobHandler {
             messageId: d.messageId
           }))
         },
-        metadata: {
-          notificationType: params.type,
-          digestId: params.digestId,
-          duration: result.duration,
-          deliveredAt: result.deliveredAt
-        }
-      };
-
-      if (!result.success) {
-        jobResult.error = result.error;
-      } else if (result.failedCount > 0) {
-        jobResult.error = `Partial success: ${result.failedCount} of ${result.totalRecipients} deliveries failed`;
-      }
-
-      logger.info({
-        jobId: job.id,
-        notificationId: result.id,
-        successCount: result.successfulDeliveries,
-        failureCount: result.failedCount,
-        totalRecipients: result.totalRecipients,
-        duration: result.duration
-      }, 'Notification job completed');
+        error: result.error
+      } as any;
 
       return jobResult;
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error({
         jobId: job.id,
-        error: errorMessage
+        error: error instanceof Error ? error.message : String(error)
       }, 'Notification job failed');
-
       return {
         success: false,
-        error: errorMessage
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   }
@@ -374,6 +374,45 @@ export class NotificationJobHandler implements JobHandler {
         jobId,
         error: error instanceof Error ? error.message : String(error)
       }, 'Failed to store job notification record');
+    }
+  }
+
+  private async sendSlackDigestToSettingsChannel(params: NotificationJobParams): Promise<{ success: boolean; messageId?: string; channel: string; error?: string }> {
+    try {
+      const slackToken = process.env.SLACK_BOT_TOKEN || '';
+      const slackSigningSecret = process.env.SLACK_SIGNING_SECRET || '';
+      if (!slackToken || !slackSigningSecret) {
+        return { success: false, channel: '#general', error: 'Slack not configured' };
+      }
+
+      // Load channel from settings
+      let channel = process.env.SLACK_DEFAULT_CHANNEL || '#general';
+      try {
+        const notificationsSetting = await db.setting.findUnique({ where: { key: 'notifications' } });
+        if (notificationsSetting) {
+          const settingsObj = JSON.parse(notificationsSetting.valueJson);
+          const configured = settingsObj?.slackNotifications?.channel;
+          if (configured && typeof configured === 'string' && configured.trim().length > 0) {
+            channel = configured.trim();
+          }
+        }
+      } catch (e) {
+        logger.warn({ error: e instanceof Error ? e.message : String(e) }, 'Failed to load Slack channel from settings; using default');
+      }
+
+      // Prepare Slack service and send using template
+      const slackService = new SlackService({
+        token: slackToken,
+        signingSecret: slackSigningSecret,
+        scopes: ['chat:write', 'files:write', 'users:read']
+      });
+
+      const templateData = params.data || {};
+      const result = await slackService.sendMessage('default', { channel }, params.template || 'digest_notification', templateData);
+
+      return { success: result.success, messageId: result.messageId, channel, error: result.error };
+    } catch (err) {
+      return { success: false, channel: '#general', error: err instanceof Error ? err.message : String(err) };
     }
   }
 
